@@ -103,11 +103,31 @@ AGENT_TO_NPC_ID: Dict[str, str] = {
     "viktor_ivanov": "viktor",
     "aisha_khan": "aisha",
     "marcus_weber": "marcus",
-    "lin_ruuxi": "lin_ruuxi",
+    "lin_ruoxi": "lin_ruoxi",
     # AI senders
     "athena": "athena",
     "courier": "courier",
 }
+
+# canonical 短名别名：让 build_agent_message / get_agent 既能接受 registry id
+# （如 sophia_ramirez）也能接受短名（sophia），二者指向同一 NPC 配置
+for _rid, _npc in list(NPC_REGISTRY.items()):
+    _short = AGENT_TO_NPC_ID.get(_rid)
+    if _short and _short not in NPC_REGISTRY:
+        NPC_REGISTRY[_short] = _npc
+
+
+def normalize_agent_id(agent_id: str) -> str:
+    """将任意 agent_id 归一化为 canonical 短名（game_state.npc_states 键）
+
+    registry id (sophia_ramirez) → short (sophia)
+    short id (sophia) → short (sophia)
+    未知 → chen_hao
+    """
+    if agent_id in AGENT_TO_NPC_ID:
+        return AGENT_TO_NPC_ID[agent_id]
+    # 已经是短名且在 npc_states 中
+    return agent_id if agent_id in NPC_REGISTRY else "chen_hao"
 
 # 保留旧 MOCK_GAME_STATE 的 sol/mars_time 等字段用于 status 命令（Phase 2 过渡）
 # TODO: 后续完全迁移到 GameState
@@ -419,8 +439,13 @@ def _process_natural_language(
     player_input: str,
     agent_id: str,
     response_mode: str,
+    npc_state_vars: Optional[Dict] = None,
 ) -> Dict:
-    """处理自然语言输入，走完整 Agent 链路"""
+    """处理自然语言输入，走完整 Agent 链路
+
+    Args:
+        npc_state_vars: NPC 心理状态变量，传给 graph 用于渲染 Jinja2 人格模板
+    """
     agent = get_agent(agent_id)
 
     # 游戏状态字符串
@@ -431,6 +456,7 @@ def _process_natural_language(
         player_input=player_input,
         game_state=game_state,
         response_mode=response_mode,
+        npc_state_vars=npc_state_vars,
     )
     # §8.3: latency_ms 是模拟通信延迟，不是 chat() 执行耗时
     # 公式: 500 + (100 - signal_quality) * 50
@@ -478,3 +504,96 @@ def _process_natural_language(
     )
 
     return msg
+
+
+# ============================================================
+# GameLoop 集成（B 计划：事件驱动游戏循环）
+# ============================================================
+
+# 全局 GameLoop 单例（首次访问时初始化）
+_game_loop = None
+
+# meta 命令前缀（与 game_loop._META_PREFIX 一致）
+_META_PREFIX = ":"
+
+
+def _chat_fn(player_input: str, agent_id: str, response_mode: str, npc_state_vars: Dict) -> Dict:
+    """game_loop 注入的 chat 回调：复用 _process_natural_language 的全部信封构建逻辑
+
+    与直接调 process_input 的区别：这里始终走自然语言路径，且注入 npc_state_vars。
+    """
+    return _process_natural_language(player_input, agent_id, response_mode, npc_state_vars)
+
+
+def get_game_loop():
+    """获取全局 GameLoop 单例
+
+    首次调用时初始化 GameState + EventScheduler + GameLoop，并启动 survival 章节。
+    """
+    global _game_loop
+    if _game_loop is None:
+        from agent.event_scheduler import EventScheduler
+        from agent.game_loop import GameLoop
+        gs = get_game_state()
+        scheduler = EventScheduler(gs)
+        _game_loop = GameLoop(gs, scheduler, chat_fn=_chat_fn)
+        _game_loop.start()
+        logger.info("GameLoop 初始化完成: stage=%s, Sol=%d",
+                    scheduler.chapter.stage_id, gs.sol)
+    return _game_loop
+
+
+def process_player_turn(raw_input: str, agent_id: str = "chen_hao",
+                        response_mode: str = "deliberate") -> List[Dict]:
+    """玩家回合统一入口（B 计划）
+
+    自动区分：
+    - meta 命令（: 开头）→ game_loop.handle_meta
+    - 自然语言 / 情感指令 → game_loop.tick
+    - 系统命令（ls/status/talk 等前端 shell 命令）→ 沿用 handle_command
+
+    Returns:
+        待发送的消息信封列表（可能多条，如 :sol 后跟 story_event）
+    """
+    text = raw_input.strip()
+    if not text:
+        return [_build_command_response(
+            [{"text": "输入不能为空。", "protected": True, "tag": "command_response"}], None
+        )]
+
+    gl = get_game_loop()
+
+    # meta 命令
+    if text.startswith(_META_PREFIX):
+        parts = text[1:].split()
+        command = parts[0].lower() if parts else ""
+        args = parts[1:]
+        msg = gl.handle_meta(command, args)
+        # :sol 可能附带后续 story_event
+        results = [msg]
+        for evt in msg.pop("_followup_story_events", []):
+            results.append(evt)
+        return results
+
+    # 前端 shell 系统命令（ls/status/talk 等）仍走原路径，保持兼容
+    parts = text.split()
+    first_word = parts[0].lower() if parts else ""
+    if first_word in SYSTEM_COMMANDS:
+        command, args = first_word, parts[1:]
+        agent = get_agent(agent_id)
+        return [handle_command(command, args, agent)]
+
+    # 自然语言 / 情感指令 → game_loop.tick
+    # 归一化为 canonical 短名；若前端未指定（默认 chen_hao）则用 game_loop.active_npc
+    target = normalize_agent_id(agent_id)
+    if target == "chen_hao" and agent_id == "chen_hao":
+        # 前端用默认值 → 沿用 game_loop 当前对话目标
+        target = gl.active_npc
+    return gl.tick(text, target, response_mode)
+
+
+def handle_option_select(event_id: str, option_id: str,
+                         followup_id: Optional[str] = None) -> Dict:
+    """option_select 入口（B 计划 v1.2 §11.4 C→S）"""
+    gl = get_game_loop()
+    return gl.handle_option_select(event_id, option_id, followup_id)

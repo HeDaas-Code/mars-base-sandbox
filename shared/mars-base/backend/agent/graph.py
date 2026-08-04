@@ -95,8 +95,9 @@ def generate_response(state: AgentState) -> Dict:
     memories = state.get("retrieved_memories", "（无相关记忆）")
     player_input = state["player_input"]
 
-    # 构建 System Prompt
-    sys_prompt = get_system_prompt(agent_id, game_state)
+    # 构建 System Prompt（npc_state_vars 由 game_loop / ws_adapter 注入）
+    npc_state_vars = state.get("npc_state_vars")
+    sys_prompt = get_system_prompt(agent_id, game_state, npc_state_vars)
     full_system = f"""{sys_prompt}
 
 ## 相关记忆
@@ -276,6 +277,7 @@ class Agent:
         game_state: str = "",
         response_mode: str = "deliberate",
         thread_id: str = None,
+        npc_state_vars: Dict = None,
     ) -> Dict:
         """
         与 Agent 对话
@@ -285,6 +287,8 @@ class Agent:
             game_state: 游戏状态上下文字符串
             response_mode: reflexive / deliberate / deep
             thread_id: 会话线程 ID（用于多会话隔离）
+            npc_state_vars: NPC 心理状态变量（stress/morale/trust_in_player/stage/recent_events）
+                用于渲染非 chen_hao 的 Jinja2 人格模板
 
         Returns:
             包含 response, prompt_tokens, completion_tokens 的字典
@@ -304,6 +308,7 @@ class Agent:
             "summary": "",
             "compressed_count": 0,
             "new_memory_id": "",
+            "npc_state_vars": npc_state_vars,
         }
 
         config_thread = {"configurable": {"thread_id": tid}}
