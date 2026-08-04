@@ -1,0 +1,308 @@
+# ============================================================
+# 主线节点事件剧本：分支 B - 自力更生线
+# 对应 v1.1 §1.5 分支B / §2.2 核心循环 / §3.2 资源管理
+# 文件粒度：单分支一文件，5 个主线节点
+# 接口契约：dict.load_branch('B') + dict.fire_event(event_id) + state mutations
+# 作者：蔚蓝-游戏系统策划  日期：2026-08-02
+# ============================================================
+
+branch_id: B
+branch_name: 自力更生线
+trigger_condition: "isru_production_chain == initiated and greenhouse_stage >= 1 and sol >= 110"
+narrative_focus: "从依赖救援到主动建设——'我们能在这里活下去'的证明"
+endings:
+  - E2: 火星之子（成功建立永久定居点）
+  - B_bad_ending: 最后阶段资源断裂失败
+
+# ============================================================
+# 事件节点定义
+# ============================================================
+
+events:
+  # ----------------------------------------------------------
+  # B1：ISRU 生产链启动决策
+  # ----------------------------------------------------------
+  - event_id: ev_B1_isru_chain_decision
+    node_index: 1
+    sol_expected_range: [110, 125]
+    stage_required: [explore]
+    trigger:
+      trigger_type: state_match
+      condition: "moxie2_status == repaired and sol >= 110 and self_sufficiency < 0.25"
+    description: |
+      雅典娜评估报告：当前资源仅够支撑 60 Sol。若要长期生存，必须启动 ISRU（In-Situ Resource Utilization）生产链。
+      完整生产链包括：MOXIE-2（氧气）→ 水循环（再生水）→ 水培温室（食物）→ 备件制造（3D打印 + 矿物提炼）。
+      全链建设需 60-80 Sol 工期，期间资源消耗加剧——短期会变困难。
+      维克托强烈主张（这是他的建造专长），索菲亚强烈支持（水培温室是她的执念）。
+    bound_npcs:
+      primary: viktor
+      advocates: [sophia, athena]
+      skeptic: chen_hao
+    player_options:
+      - option_id: B1_opt1_full_chain
+        label: "启动完整 ISRU 生产链（4 个子系统同步建设）"
+        effects:
+          state_set: {isru_strategy: full, target_self_sufficiency: 0.95, build_duration_sol: 70}
+          crew_workload: +0.4
+          parts_priority: high
+          trust_delta: {viktor: +12, sophia: +10, chen_hao: -3}
+          branch_progress: B +2
+        leads_to: ev_B2_greenhouse_self_sufficient
+      - option_id: B1_opt2_staged_chain
+        label: "分阶段启动（先氧气→水→温室→备件，按需推进）"
+        effects:
+          state_set: {isru_strategy: staged, target_self_sufficiency: 0.75, build_duration_sol: 50}
+          crew_workload: +0.25
+          trust_delta: {viktor: +5, sophia: +5, chen_hao: +5}
+          branch_progress: B +1
+        leads_to: ev_B2_greenhouse_self_sufficient
+      - option_id: B1_opt3_minimal_chain
+        label: "只修关键三件（氧气/水/食物），不建备件制造"
+        effects:
+          state_set: {isru_strategy: minimal, target_self_sufficiency: 0.6, build_duration_sol: 35}
+          crew_workload: +0.15
+          risk: "后期无备用件制造能力，设备故障靠存量"
+          trust_delta: {viktor: -5, sophia: +3, chen_hao: +8}
+          branch_progress: B +1
+        leads_to: ev_B2_greenhouse_self_sufficient
+    design_note: |
+      分支 B 的入场决策。opt1 高风险高回报，opt3 务实保守。
+      维克托在 opt1 会给 +12 信任——这是他的建造主场。
+      索菲亚的执念（火星第一棵树）依赖 greenhouse_stage >= 3，opt1 路径最容易达成。
+
+  # ----------------------------------------------------------
+  # B2：水培农场自给里程碑
+  # ----------------------------------------------------------
+  - event_id: ev_B2_greenhouse_self_sufficient
+    node_index: 2
+    sol_expected_range: [135, 155]
+    stage_required: [explore, build]
+    trigger:
+      trigger_type: state_match
+      condition: "greenhouse_stage >= 2 and sol >= 135"
+    description: |
+      索菲亚的水培温室进入第二阶段：叶菜类稳定产出，食物配给可减少对外部储备的依赖 30%。
+      但她有更远的目标：要让温室产出稳定的卡路里（根茎类），并尝试改良火星土壤种树。
+      关键决策：是否投入额外资源让温室进入第三阶段（高风险高回报）？
+      索菲亚请求玩家支持她的"火星第一棵树"实验——这是她的执念，也是分支B结局视觉锚点。
+    bound_npcs:
+      primary: sophia
+      advisor: athena
+    player_options:
+      - option_id: B2_opt1_advance_stage3
+        label: "投入资源让温室进入第三阶段（含土壤改良实验）"
+        effects:
+          state_set: {greenhouse_stage: 3, parts_available: -5, sol_invested: 15}
+          trust_delta: {sophia: +15, viktor: -3, chen_hao: +3}
+          narrative_flag: {sophia_tree_dream_invested: true}
+          branch_progress: B +2
+        leads_to: ev_B3_oxygen_full_power
+      - option_id: B2_opt2_consolidate_stage2
+        label: "巩固第二阶段，确保稳定产出"
+        effects:
+          state_set: {greenhouse_stage: 2.5}
+          trust_delta: {sophia: +3, viktor: +3}
+          branch_progress: B +1
+        leads_to: ev_B3_oxygen_full_power
+      - option_id: B2_opt3_sophia_dream_special
+        label: "特别批准索菲亚的'火星第一棵树'实验（独占资源）"
+        effects:
+          state_set: {greenhouse_stage: 3, sophia_tree_experiment: active, parts_available: -8, sol_invested: 20}
+          trust_delta: {sophia: +25, viktor: -8, chen_hao: -5}
+          morale_delta: {all: +0.1, sophia: +0.3}
+          risk: "失败则索菲亚 morale -0.3，连带全员 -0.05"
+          branch_progress: B +3
+          narrative_flag: {sophia_tree_dream_committed: true}
+        leads_to: ev_B3_oxygen_full_power
+    design_note: |
+      opt3 是分支B的关键叙事节点——索菲亚执念的承认。
+      若选择 opt3 并在 B5 之前完成实验，将解锁 E2 结局的"视觉高潮"——火星第一棵树萌芽。
+
+  # ----------------------------------------------------------
+  # B3：MOXIE 满功率运行
+  # ----------------------------------------------------------
+  - event_id: ev_B3_oxygen_full_power
+    node_index: 3
+    sol_expected_range: [150, 170]
+    stage_required: [build]
+    trigger:
+      trigger_type: state_match
+      condition: "greenhouse_stage >= 2.5 and sol >= 150 and isru_strategy in [full, staged]"
+    description: |
+      维克托报告：MOXIE-2 经过持续优化已达 65% 效率。要满功率（85%+）需要更换核心模块——但备用模块只剩 1 件，且从未用过。
+      这是关键决策：换上去能达成氧气自给；但备用件一旦用完，后续故障只能靠 3D 打印替代品（维克托评估可靠性 60%）。
+      艾莎提出：让雅典娜预测未来 100 Sol 的故障概率，辅助决策。维克托反对——他说"概率不是判断"。
+    bound_npcs:
+      primary: viktor
+      advisor_conflict: [athena, aisha]
+    player_options:
+      - option_id: B3_opt1_replace_full_power
+        label: "更换核心模块，MOXIE 满功率（牺牲最后备用件）"
+        effects:
+          state_set: {moxie2_efficiency: 88, last_spare_used: true}
+          oxygen_production_L_per_sol: 70
+          self_sufficiency_delta: +0.2
+          trust_delta: {viktor: +10, chen_hao: +5, athena: -2}
+          branch_progress: B +2
+        leads_to: ev_B4_rover_base_expansion
+      - option_id: B3_opt2_keep_spare_conservative
+        label: "保留备用件，MOXIE 维持 65%（保守）"
+        effects:
+          state_set: {moxie2_efficiency: 65}
+          oxygen_production_L_per_sol: 50
+          self_sufficiency_delta: +0.05
+          trust_delta: {viktor: +5, chen_hao: +3}
+          risk: "self_sufficiency 目标 0.95 难达成"
+          branch_progress: B +1
+        leads_to: ev_B4_rover_base_expansion
+      - option_id: B3_opt3_athena_informed
+        label: "让雅典娜做故障概率预测辅助决策"
+        effects:
+          state_set: {athena_prediction: consulted, athena_recommendation: replace}
+          trust_delta: {viktor: -8, aisha: +5}
+          followup_option: "B3_opt3a_accept_athena（同 opt1 效果但 viktor -10）/ B3_opt3b_reject_athena（同 opt2 效果但 aisha -5）"
+          branch_progress: B +1
+        leads_to: ev_B4_rover_base_expansion
+    design_note: |
+      opt3 引入"AI 建议介入"机制——雅典娜给出建议，玩家决定是否采纳。
+      这是分支B中维克托与雅典娜冲突最尖锐的节点之一。
+      若 aisha.ai_trust 决策权重高（0.85）路径走到这里，她的态度会很激烈。
+
+  # ----------------------------------------------------------
+  # B4：漫游车修复与基地扩建
+  # ----------------------------------------------------------
+  - event_id: ev_B4_rover_base_expansion
+    node_index: 4
+    sol_expected_range: [170, 200]
+    stage_required: [build]
+    trigger:
+      trigger_type: state_match
+      condition: "moxie2_efficiency >= 65 and greenhouse_stage >= 2.5 and sol >= 170"
+    description: |
+      资源链基本建立。下一阶段：修复漫游车（RT-7）以扩展地表探索能力，并扩建基地——增加居住舱、温室、储物区。
+      维克托主导工程，但需要全员配合。陈昊建议分两阶段：先漫游车，后基地扩建。
+      索菲亚提议：扩建时给温室预留"户外延伸区"——她想让树苗接触到火星阳光（虽然隔着穹顶）。
+      林若曦报告：地表勘探发现距离基地 4 公里处有水冰沉积——这是革命性的资源发现。
+    bound_npcs:
+      primary: viktor
+      all_crew: true
+      special: [sophia, lin_ruoxi]
+    player_options:
+      - option_id: B4_opt1_rover_then_expansion
+        label: "先修漫游车（按陈昊方案）"
+        effects:
+          state_set: {rover_status: repairing, base_expansion: delayed}
+          crew_workload: +0.2
+          trust_delta: {chen_hao: +8, viktor: +5}
+          branch_progress: B +1
+        leads_to: ev_B5_colony_declaration
+      - option_id: B4_opt2_parallel_expansion
+        label: "并行进行漫游车修复与基地扩建（维克托主导）"
+        effects:
+          state_set: {rover_status: repairing, base_expansion: active}
+          crew_workload: +0.4
+          trust_delta: {viktor: +12, chen_hao: -3}
+          branch_progress: B +2
+        leads_to: ev_B5_colony_declaration
+      - option_id: B4_opt3_water_ice_priority
+        label: "优先派漫游车去水冰沉积点勘察（林若曦建议）"
+        effects:
+          state_set: {rover_status: dispatched_to_water_ice, base_expansion: delayed}
+          crew_workload: +0.15
+          trust_delta: {lin_ruoxi: +15, viktor: -3, chen_hao: +5}
+          narrative_flag: {water_ice_discovered: true}
+          branch_progress: B +3
+        leads_to: ev_B5_colony_declaration
+    design_note: |
+      opt3 是高潜力路径——水冰发现会大幅提升 self_sufficiency 目标可达性。
+      林若曦在此节点的 +15 信任会触发她对陈昊芥蒂的缓和（章节字典 stage2 关系网络伏笔）。
+
+  # ----------------------------------------------------------
+  # B5：终局——殖民地成立宣言
+  # ----------------------------------------------------------
+  - event_id: ev_B5_colony_declaration
+    node_index: 5
+    sol_expected_range: [200, 230]
+    stage_required: [climax]
+    trigger:
+      trigger_type: state_match
+      condition: "sol >= 200 and self_sufficiency >= 0.7 and event_B4_completed == true"
+    description: |
+      资源自给率已超过 70%。小组面临历史性决策：是否宣布"赫拉克勒斯殖民地"正式成立？
+      这意味着：放弃等待地球救援的依赖心态，正式宣告永久定居。
+      陈昊发起全员表决。每人立场不同：
+      - 维克托：支持（这是他建造的最后作品，也是杰作）
+      - 索菲亚：强烈支持（她的树苗已经萌芽）
+      - 艾莎：支持但保留（她仍希望联系地球）
+      - 马库斯：保留（他担心长期封闭环境对心理的影响）
+      - 林若曦：支持（她发现了水冰，这里有她的科学价值）
+      - 陈昊：取决于玩家与陈昊的对话（他会犹豫到最后一刻）
+    bound_npcs:
+      all_crew: true
+      primary: chen_hao
+    ending_determination:
+      - condition: "vote_yes >= 4 and self_sufficiency >= 0.85 and sophia_tree_experiment == success"
+        ending: E2_mars_child_with_tree
+        description: "火星之子 + 索菲亚的树——分支B最圆满结局"
+      - condition: "vote_yes >= 4 and self_sufficiency >= 0.75"
+        ending: E2_mars_child
+        description: "火星之子——永久定居点成立"
+      - condition: "vote_yes < 4 or self_sufficiency < 0.7"
+        ending: B_bad_ending
+        description: "殖民地宣言未通过——最后阶段资源断裂失败"
+      - condition: "marcus.crisis_triggered == true and vote_yes >= 4"
+        ending: E2_marcus_compromise
+        description: "殖民地成立但马库斯需返地球治疗——开放式结局"
+    player_options:
+      - option_id: B5_opt1_campaign_all_yes
+        label: "全力推动全员支持宣言"
+        effects:
+          vote_yes_delta: +2
+          crew_workload: +0.2
+          ending_check: true
+      - option_id: B5_opt2_consent_chen_hao
+        label: "重点说服陈昊（理解他的犹豫）"
+        effects:
+          vote_yes_delta: +1
+          chen_hao_decisive: true
+          trust_delta: {chen_hao: +15}
+          ending_check: true
+      - option_id: B5_opt3_wait_more
+        label: "暂缓宣言，再积累资源到 90% 自给"
+        effects:
+          state_set: {declaration_delayed: true, sol_invested: +20}
+          risk: "期间若有重大故障，可能跌破阈值"
+          ending_check: true
+    design_note: |
+      这是分支B的情感高潮。E2_mars_child_with_tree 是分支B最圆满结局——需要玩家在 B2 选 opt3 并在 B5 前完成实验。
+      陈昊的犹豫是 v1.1 §1.4 心理锚点"妻子待产"的延伸——他在地球有家人，宣布殖民地等于承认"不再回去"。
+
+# ============================================================
+# 跨分支交互
+# ============================================================
+cross_branch_interactions:
+  - to_branch: A
+    condition: "isru_strategy == minimal and earth_contact_confirmed == true"
+    interaction: "自给不足会触发回 A 线——但结局劣化"
+  - to_branch: C
+    condition: "rover_status == dispatched_to_water_ice and sol >= 180"
+    interaction: "漫游车远征可能意外发现遗迹线索——C 线 hook 部分激活"
+  - to_branch: D
+    condition: "vote_yes < 4 and marcus.stress >= 0.7"
+    interaction: "宣言未通过 + 马库斯危机——可能转 D 线"
+
+# ============================================================
+# 分支元数据
+# ============================================================
+metadata:
+  total_nodes: 5
+  sol_span: [110, 230]
+  npc_focus: [viktor, sophia, chen_hao, lin_ruoxi]
+  created_by: 蔚蓝-游戏系统策划
+  created_at: 2026-08-02
+  source_doc: 游戏系统设计方案_赫拉克勒斯协议_v1.1.md §1.5
+  notes: |
+    - 分支B是"主动建设"路径，资源管理是核心
+    - 索菲亚的树是 E2 最圆满结局的视觉锚点
+    - 维克托与雅典娜的冲突在此分支最尖锐（建造决策权）
+    - 林若曦的水冰发现是 opt3 路径的高回报设计

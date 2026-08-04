@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>火星信号 · Mars Signal</title>
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/terminal.css">
+  <link rel="stylesheet" href="styles/panels.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/emotion.css">
+  <link rel="stylesheet" href="styles/event-panel.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
+</head>
+<body>
+  <!-- 启动动画层 -->
+  <div id="boot-screen" class="boot-screen">
+    <div class="boot-content">
+      <div class="boot-title">MARS SIGNAL</div>
+      <div class="boot-subtitle">─── 火星信号 ───</div>
+      <div class="boot-status" id="boot-status">[ 信号搜索中... ]</div>
+      <div class="boot-progress" id="boot-progress"></div>
+      <div class="boot-freq">扫描频率范围: 1.4 - 1.7 GHz</div>
+      <div class="boot-prompt">> 按 ENTER 建立连接</div>
+    </div>
+  </div>
+
+  <!-- 主应用容器（启动后显示） -->
+  <div id="app" class="app-container hidden">
+    <!-- 顶部状态栏 -->
+    <header id="status-bar" class="status-bar"></header>
+
+    <!-- 中部三栏布局 -->
+    <main class="main-area">
+      <!-- 左侧资源面板 -->
+      <aside id="resource-panel" class="resource-panel"></aside>
+
+      <!-- 中央主终端 -->
+      <section class="terminal-container">
+      <!-- 视图切换标签 + 记忆负载指示器 -->
+      <div class="terminal-header">
+        <nav class="view-tabs" id="view-tabs">
+          <button class="tab active" data-view="comms">[1] 通信</button>
+          <button class="tab" data-view="explore">[2] 探索</button>
+          <button class="tab" data-view="map">[3] 地图</button>
+          <button class="tab" data-view="signal">[4] 信号</button>
+        </nav>
+        <!-- 记忆负载指示器（锐锋 context_summary 字段驱动） -->
+        <div id="memory-load" class="memory-load-indicator"></div>
+      </div>
+        <!-- xterm.js 终端容器 -->
+        <div id="terminal" class="terminal"></div>
+        <!-- 事件流容器（嵌入终端流下方，事件/选项/followup 渲染于此） -->
+        <div id="event-stream" class="event-stream" aria-live="polite"></div>
+        <!-- 底部输入区 -->
+        <div class="input-area" id="input-area">
+          <span class="prompt">&gt;</span>
+          <input type="text" id="player-input" class="player-input"
+                 placeholder="输入指令或对话内容..." autocomplete="off">
+        </div>
+      </section>
+
+      <!-- 右侧 NPC 面板 -->
+      <aside id="crew-panel" class="crew-panel"></aside>
+    </main>
+
+    <!-- 地图视图面板（隐藏，切换tab时显示） -->
+    <div id="map-panel" class="hidden"></div>
+
+    <!-- 底部日志条 -->
+    <footer id="log-strip" class="log-strip"></footer>
+  </div>
+
+  <!-- 脚本加载 -->
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.11.0/lib/addon-web-links.min.js"></script>
+  <script src="config/npc-config.js"></script>
+  <script src="config/emotion-visual-config.js"></script>
+  <script src="ws/mock-data.js"></script>
+  <script src="ws/client.js"></script>
+  <script src="components/signal-renderer.js"></script>
+  <script src="components/event-panel.js"></script>
+  <script src="components/status-bar.js"></script>
+  <script src="components/resource-panel.js"></script>
+  <script src="components/crew-panel.js"></script>
+  <script src="components/log-strip.js"></script>
+  <script src="components/progress-bar.js"></script>
+  <script src="components/memory-load-indicator.js"></script>
+  <script src="components/map-view.js"></script>
+  <script src="components/boot-animation.js"></script>
+  <script src="terminal/xterm-config.js"></script>
+  <script src="terminal/shell.js"></script>
+  <script src="terminal/app.js"></script>
+</body>
+</html>

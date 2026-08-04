@@ -1,0 +1,262 @@
+# ============================================================
+# 章节字典：阶段2 - 探索发展期（Sol 11-25）
+# 对应 v1.1 §1.5 主线骨架·阶段2 / §2.3 节奏 / §4.4 进度曲线 / §5.3 中期游戏
+# 接口契约：dict.load_chapter(stage_id) + dict.activate_trigger/expire_trigger
+# 作者：蔚蓝-游戏系统策划  日期：2026-08-02
+# ============================================================
+
+stage_id: explore
+stage_name: 探索发展期
+sol_range: [11, 25]
+real_sol_range: [111, 130]
+narrative_focus: "探索发现、策略规划、关系深化、分支路线浮现"
+self_sufficiency_target: [20, 45]   # 自给率 20% → 45%
+instruction_count_per_sol: "3-5"
+event_frequency: medium
+pacing_feel: "有喘息空间，开始策略规划"
+critical_resources:
+  - 电力_kWh                   # 设备增多，电力缺口显现
+  - 零部件_单位               # 漫游车、温室、熔炼炉共用消耗
+  - 冰_单位                   # 温室与熔炼需求
+
+# ------------------------------------------------------------
+# 常驻线索词
+# ------------------------------------------------------------
+permanent_keywords:
+  - keyword: "漫游车_Alpha"
+    category: facility
+    priority: critical
+    description: "主车，载员 3 人，电子系统受损待修复；本阶段核心地表解锁条件"
+    bound_state:
+      - facility: rover_alpha
+        status: damaged
+        needs: [电子元件x1, 零部件x2, 艾莎操作]
+    narrative_function: "解锁地表探索系统的前置"
+
+  - keyword: "水培温室"
+    category: facility
+    priority: high
+    description: "种食物的水培设施，建造条件：零部件x5 + 冰x10 + 种子x1；产出 4 份/日 → 升级后 8 份"
+    bound_state:
+      - facility: greenhouse
+        status: not_built
+        build_req: [parts:5, ice:10, seeds:1]
+    narrative_function: "食物自给的起点，分支 B 永久定居的种子"
+
+  - keyword: "六边形地图_HexGrid"
+    category: exploration
+    priority: high
+    description: "基地为中心的六边形网格，半径 30 格，初始可见 7 格"
+    bound_state:
+      - map: hex_grid
+        visible_radius: 1
+        max_radius: 30
+    narrative_function: "探索系统的空间载体"
+
+  - keyword: "NPC关系矩阵"
+    category: relationship
+    priority: medium
+    description: "6x6 关系值矩阵，-100~+100；本阶段 NPC 矛盾开始浮现"
+    bound_state:
+      - state: relationship_matrix_6x6
+        dynamic: true
+    narrative_function: "NPC 个人事件与关系事件触发依据"
+
+  - keyword: "信任度_Trust"
+    category: psychology
+    priority: high
+    description: "NPC 对玩家的信任度，0-100；<0 拒绝执行玩家指令"
+    bound_state:
+      - state: npc_trust_player
+        range: [0, 100]
+        threshold_refuse: 0
+    narrative_function: "玩家决策质量的反馈通道"
+
+# ------------------------------------------------------------
+# 临时线索词
+# ------------------------------------------------------------
+temporary_keywords:
+  - keyword: "维克托vs艾莎_信任争论"
+    trigger:
+      trigger_id: tr_exp_001_viktor_aisha_conflict
+      trigger_type: state_match
+      condition: "sol >= 14 and athena_proposal_count >= 3 and viktor_trust < 20"
+    ttl:
+      expire_type: on_event
+      expire_condition: "conflict_viktor_aisha_resolved == true or sol >= 20"
+    description: "维克托质疑雅典娜 AI 决策的可靠性，艾莎辩护，两人关系值 -20（v1.1 §1.4）"
+    bound_pair: [viktor, aisha]
+    relationship_delta: -20
+    flag_set: {conflict_viktor_aisha: active}
+    player_options:
+      - 偏向维克托：viktor_trust+10, aisha_trust-5, athens_advisory_blocked_temp
+      - 偏向艾莎：aisha_trust+10, viktor_trust-5
+      - 调停：双方 +5，需 player charisma_check
+      - 自由输入
+    design_note: "v1.1 §5.3 NPC 矛盾爆发，关系网浮现"
+
+  - keyword: "陈昊vs林若曦_风暴旧账"
+    trigger:
+      trigger_id: tr_exp_002_chen_linruoxi_old_grudge
+      trigger_type: state_match
+      condition: "sol >= 15 and linruoxi_self_blame == active and chen_hao_stress > 50"
+    ttl:
+      expire_type: on_event
+      expire_condition: "conflict_chen_linruoxi_resolved == true or sol >= 22"
+    description: "林若曦旧账爆发——认为陈昊未重视她的太阳风暴预警，导致基地受损"
+    bound_pair: [chen_hao, lin_ruoxi]
+    relationship_delta: -30              # v1.1 §1.4 已值
+    flag_set: {conflict_chen_linruoxi: active}
+    player_options:
+      - 调解：双方 +15
+      - 站陈昊：linruoxi_trust-10
+      - 站林若曦：chen_hao_trust-10, linruoxi 释放
+      - 自由输入
+    design_note: "v1.1 §5.3 NPC 矛盾爆发"
+
+  - keyword: "林若曦大气异常信号"
+    trigger:
+      trigger_id: tr_exp_003_atmosphere_anomaly
+      trigger_type: state_match
+      condition: "sol >= 18 and linruoxi_trust >= 15 and exploration_radius >= 3"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "branch_C_locked == true or signal_source_located == true"
+    description: "林若曦在大气监测中发现非自然信号源——分支 C 科学发现线的引子"
+    bound_npc: lin_ruoxi
+    flag_set: {atmosphere_anomaly_detected: true, branch_C_available: true}
+    narrative_branch: C_scientific_discovery
+    design_note: "v1.1 §5.3 隐藏线索；分支路线开始浮现，玩家面临探索方向选择"
+
+  - keyword: "持续3日沙尘暴"
+    trigger:
+      trigger_id: tr_exp_004_major_dust_storm_3day
+      trigger_type: event_fired
+      condition: "sol >= 20 and random_roll(0.20)"
+    ttl:
+      expire_type: on_sol
+      expire_condition: "sol >= trigger_sol + 3"
+    description: "大型沙尘暴持续 3 Sol，信号强度 -30%，地表作业完全暂停，太阳能 -50%"
+    signal_quality_delta: -30
+    facility_efficiency_delta: {solar_array: -50, moxie2: -10}
+    exploration_blocked: true
+    morale_delta_per_sol: {all: -3}
+    risk_event: "沙尘暴期间压力上升，可能触发心理危机"
+    design_note: "v1.1 §5.3 大型随机事件，压力测试"
+
+  - keyword: "漫游车Alpha修复完成"
+    trigger:
+      trigger_id: tr_exp_005_rover_alpha_repaired
+      trigger_type: state_match
+      condition: "rover_alpha_status == repaired"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "stage == build"
+    description: "漫游车 Alpha 修复，解锁地表探索——首个真正意义的探索扩展"
+    state_set: {rover_alpha_status: operational, exploration_enabled: true}
+    achievement_id: ACH_first_step_mars
+    morale_delta: {all: +5}
+
+  - keyword: "温室建设完成"
+    trigger:
+      trigger_id: tr_exp_006_greenhouse_built
+      trigger_type: state_match
+      condition: "greenhouse_status == built"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "stage == build"
+    description: "水培温室建成，食物日产出 0 → 4 份，自给率突破 30%"
+    state_set: {greenhouse_status: operational, food_production_per_sol: 4}
+    achievement_id: ACH_first_harvest
+    morale_delta: {sofia: +15, all: +5}
+    design_note: "v1.1 §5.3 成就感来源"
+
+  - keyword: "分支路线浮现"
+    trigger:
+      trigger_id: tr_exp_007_branch_fork_emerging
+      trigger_type: state_match
+      condition: "sol >= 22 and (atmosphere_anomaly_detected == true or rover_alpha_status == repaired or comm_priority == high)"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "branch_choice_made == true or stage == build"
+    description: "玩家发现探索可走向不同方向：A 修通信求救 / B 发展自给 / C 深入探索异常信号"
+    flag_set: {branch_fork_visible: true}
+    branches_available: [A, B, C]
+    design_note: "v1.1 §5.3 主线分支浮现，阶段3 进入明确分支路线"
+
+  - keyword: "维克托罕见肯定"
+    trigger:
+      trigger_id: tr_exp_008_viktor_rare_praise
+      trigger_type: state_match
+      condition: "viktor_trust >= 30 and sol >= 20"
+    ttl:
+      expire_type: on_sol
+      expire_condition: "sol >= trigger_sol + 1"           # 瞬时成就，仅 1 Sol
+    description: "维克托罕见地夸玩家：'你的调度安排……还算合理。'"
+    bound_npc: viktor
+    achievement_id: ACH_viktor_acknowledgment
+    design_note: "v1.1 §5.3 成就感来源；最难讨好的 NPC 首次软化"
+
+# ------------------------------------------------------------
+# 剧情FSM节点
+# ------------------------------------------------------------
+fsm_nodes:
+  - node_id: fsm_exp_001
+    sol: 11
+    trigger_fires: [tr_exp_005_rover_alpha_repaired]
+    description: "阶段切换——优先触发漫游车修复线，打开地表探索"
+    next: fsm_exp_002
+
+  - node_id: fsm_exp_002
+    sol: 13
+    trigger_fires: []
+    description: "首次地表探索窗口开启；近距探索 1-2 格，发现普通资源点"
+    next: fsm_exp_003
+
+  - node_id: fsm_exp_003
+    sol: 14
+    trigger_fires: [tr_exp_001_viktor_aisha_conflict]
+    description: "维克托-艾莎信任争论触发窗口"
+    next: fsm_exp_004
+
+  - node_id: fsm_exp_004
+    sol: 15
+    trigger_fires: [tr_exp_002_chen_linruoxi_old_grudge]
+    description: "陈昊-林若曦风暴旧账触发窗口"
+    next: fsm_exp_005
+
+  - node_id: fsm_exp_005
+    sol: 17
+    trigger_fires: [tr_exp_006_greenhouse_built]
+    description: "温室建设里程碑预期窗口"
+    next: fsm_exp_006
+
+  - node_id: fsm_exp_006
+    sol: 18
+    trigger_fires: [tr_exp_003_atmosphere_anomaly]
+    description: "林若曦大气异常信号触发窗口；分支 C 引子"
+    next: fsm_exp_007
+
+  - node_id: fsm_exp_007
+    sol: 20
+    trigger_fires: [tr_exp_004_major_dust_storm_3day, tr_exp_008_viktor_rare_praise]
+    description: "沙尘暴 3 日事件窗口 + 维克托软化窗口"
+    next: fsm_exp_008
+
+  - node_id: fsm_exp_008
+    sol: 22
+    trigger_fires: [tr_exp_007_branch_fork_emerging]
+    description: "分支路线浮现，玩家面临方向选择"
+    next: fsm_build_001
+
+# ------------------------------------------------------------
+# 阶段切换条件
+# ------------------------------------------------------------
+stage_transition:
+  next_stage_id: build
+  transition_condition: "sol >= 26 and (branch_fork_visible == true)"
+  on_transition:
+    - dict.expire_trigger(tr_exp_003_atmosphere_anomaly)    # 若未锁定，转为分支 C 持续线索
+    - dict.expire_trigger(tr_exp_007_branch_fork_emerging) # 已选择分支
+    - dict.load_chapter(build)
+    - flag_set: {stage: build}

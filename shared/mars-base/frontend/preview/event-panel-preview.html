@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>事件呈现UI · 预览 · Mars Signal</title>
+  <link rel="stylesheet" href="../styles/variables.css">
+  <link rel="stylesheet" href="../styles/base.css">
+  <link rel="stylesheet" href="../styles/animations.css">
+  <link rel="stylesheet" href="../styles/panels.css">
+  <link rel="stylesheet" href="../styles/event-panel.css">
+  <style>
+    body {
+      background-color: var(--color-bg-primary);
+      font-family: var(--font-mono);
+      color: var(--color-text-primary);
+      padding: 16px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .preview-header {
+      font-family: var(--font-display);
+      font-size: var(--font-size-system);
+      color: var(--color-text-highlight);
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+    .preview-section-label {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin: 20px 0 8px;
+      padding: 4px 8px;
+      border-left: 3px solid var(--color-text-primary);
+      background-color: rgba(255,179,71,0.05);
+    }
+    .signal-test-bar {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+    }
+    .signal-test-bar button {
+      background-color: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-primary);
+      padding: 4px 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .signal-test-bar button:hover {
+      border-color: var(--color-text-primary);
+    }
+    .signal-test-bar button.active {
+      border-color: var(--color-text-highlight);
+      color: var(--color-text-highlight);
+    }
+    #event-target { min-height: 200px; }
+  </style>
+</head>
+<body>
+  <div class="preview-header">◆ MARS SIGNAL · 事件呈现UI预览 v1.0</div>
+
+  <div class="preview-section-label">1. 事件弹窗面板 + 玩家选项</div>
+  <div class="signal-test-bar" id="signal-bar">
+    <button data-sq="100" class="active">信号 100%</button>
+    <button data-sq="65">信号 65%</button>
+    <button data-sq="35">信号 35%</button>
+    <button data-sq="10">信号 10%</button>
+  </div>
+  <div id="event-target"></div>
+
+  <div class="preview-section-label">2. 任务下达面板</div>
+  <div id="task-target"></div>
+
+  <div class="preview-section-label">3. 事件结果反馈</div>
+  <div id="result-target"></div>
+
+  <div class="preview-section-label">4. Sol 推进通知</div>
+  <div id="sol-target"></div>
+
+  <script src="../config/npc-config.js"></script>
+  <script src="../components/signal-renderer.js"></script>
+  <script src="../components/event-panel.js"></script>
+  <script>
+    // 渲染事件面板
+    function renderEventPreview(signalQuality) {
+      const target = document.getElementById('event-target');
+      target.innerHTML = '';
+      const data = { ...MOCK_EVENT_DATA, signal_quality: signalQuality };
+      eventPanel.render(data, target);
+
+      // 选项选择回调
+      eventPanel.onOptionSelect = (optionId) => {
+        const opt = data.player_options.find(o => o.option_id === optionId);
+        const resultTarget = document.getElementById('result-target');
+        resultTarget.innerHTML = '';
+        eventPanel.renderResult(opt.effects, resultTarget, opt.label);
+      };
+    }
+
+    // 初始渲染
+    renderEventPreview(100);
+
+    // 信号质量切换
+    document.getElementById('signal-bar').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      document.querySelectorAll('#signal-bar button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const sq = parseInt(btn.dataset.sq);
+      renderEventPreview(sq);
+    });
+
+    // 渲染任务面板
+    eventPanel.renderTaskBriefing(MOCK_TASK_DATA, document.getElementById('task-target'));
+
+    // 渲染默认结果反馈
+    eventPanel.renderResult(MOCK_RESULT_DATA, document.getElementById('result-target'), '修复主通信阵列（联系地球优先）');
+
+    // 渲染 Sol 推进
+    eventPanel.renderSolAdvance({ sol: 108, delta: 1, chapter: '阶段1 · 生存' }, document.getElementById('sol-target'));
+  </script>
+</body>
+</html>

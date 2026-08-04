@@ -1,0 +1,337 @@
+# ============================================================
+# 章节字典：阶段4 - 抉择冲刺期（Sol 46-60）
+# 对应 v1.1 §1.5 主线骨架·阶段4 / §2.3 节奏 / §4.4 进度曲线 / §5.5 后期游戏 / §5.6 终局
+# 作者：蔚蓝-游戏系统策划  日期：2026-08-02
+# ============================================================
+
+stage_id: climax
+stage_name: 抉择冲刺期
+sol_range: [46, 60]
+real_sol_range: [146, 160]
+narrative_focus: "高潮叙事、多线并发压力、终极抉择、NPC命运定局、结局达成"
+self_sufficiency_target: [80, 100]    # 自给率 80% → 100%（分支B 目标）
+instruction_count_per_sol: "3-5"
+event_frequency: high                 # 多线并发，高潮迭起
+pacing_feel: "多线并行，高潮迭起"
+critical_resources:
+  - 氧气_O2_L                         # 终局倒计时核心
+  - 食物_份
+  - 电子元件_单位                     # 飞船/通信修复关键
+  - NPC 心理状态                      # 防止崩溃
+
+# ------------------------------------------------------------
+# 常驻线索词
+# ------------------------------------------------------------
+permanent_keywords:
+  - keyword: "结局触发矩阵"
+    category: ending
+    priority: critical
+    description: "7 种结局（E1~E7，含隐藏 E7 雅典娜觉醒）的触发条件与基调定义"
+    bound_state:
+      - endings: [E1, E2, E3, E4, E5, E6, E7_hidden]
+    narrative_function: "本阶段所有终极抉择的最终归宿"
+
+  - keyword: "NPC命运抉择"
+    category: morality
+    priority: critical
+    description: "是否牺牲某位 NPC 保全其他人 / 是否公开火星遗迹 / 是否信任雅典娜觉醒"
+    bound_state:
+      - state: final_choices
+        dynamic: true
+    narrative_function: "玩家定义结局走向的核心决策集合"
+
+  - keyword: "最终对决_与陈昊"
+    category: climax
+    priority: critical
+    description: "玩家与陈昊的最后对话：'如果回不去，我们做的一切还有意义吗？'"
+    bound_npc: chen_hao
+    flag_set: {final_dialogue_triggered: false}
+    narrative_function: "v1.1 §5.5 最终对决；情感与哲学的收束点"
+
+  - keyword: "终局报告"
+    category: ending
+    priority: high
+    description: "终端输出最终结算：结局名称、生存天数、自给率、关系图谱、关键决策回顾"
+    bound_state:
+      - report: terminal_output_table
+    narrative_function: "v1.1 §5.6 终局报告"
+
+# ------------------------------------------------------------
+# 临时线索词
+# ------------------------------------------------------------
+temporary_keywords:
+  - keyword: "多线并发危机"
+    trigger:
+      trigger_id: tr_clx_001_multi_line_crisis
+      trigger_type: sol_reached
+      condition: "sol == 46"
+    ttl:
+      expire_type: on_sol
+      expire_condition: "sol >= 49"
+    description: "玩家遭遇连续危机事件——多线并发的压力测试"
+    event_queue_active:
+      - random_event_chance: 0.40        # 提升至 40%
+      - stress_delta_per_sol: {all: +5}
+      - morale_delta_per_sol: {all: -3}
+    design_note: "v1.1 §5.5 应对连续危机事件"
+
+  - keyword: "分支A_救援飞船到达倒计时"
+    trigger:
+      trigger_id: tr_clx_002_branch_A_rescue_countdown
+      trigger_type: state_match
+      condition: "branch_choice == A and sol >= 48"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "ending_triggered == true"
+    description: "分支A：救援飞船到达倒计时——小组必须将生存时间维持到 Sol 280"
+    bound_branch: A
+    state_set: {rescue_countdown_visible: true}
+    player_options:
+      - 加速自给建设
+      - 集中资源保生存
+      - 分散资源保士气
+      - 自由输入
+    ending_paths:
+      - E1_hercules_return: 全员存活到 Sol 280
+      - E5_last_signal: 全员牺牲但数据传回
+    design_note: "v1.1 §1.5 分支A 结局变体"
+
+  - keyword: "分支B_永久定居宣告"
+    trigger:
+      trigger_id: tr_clx_003_branch_B_permanent_settlement_declaration
+      trigger_type: state_match
+      condition: "branch_choice == B and self_sufficiency_pct >= 80 and sol >= 48"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "ending_triggered == true"
+    description: "分支B：宣布'赫拉克勒斯殖民地'成立——永久定居的关键节点"
+    bound_branch: B
+    state_set: {colony_declared: pending}
+    player_options:
+      - 召开全员表决
+      - 静默推进定居
+      - 等待地球回应
+      - 自由输入
+    ending_paths:
+      - E2_mars_child: 成功建立永久定居点
+      - E6_collapse: 资源断裂失败
+    design_note: "v1.1 §1.5 分支B 结局变体"
+
+  - keyword: "分支C_火星遗迹道德抉择"
+    trigger:
+      trigger_id: tr_clx_004_branch_C_ruins_moral_choice
+      trigger_type: state_match
+      condition: "branch_choice == C and ruins_discovered == true and sol >= 50"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "ruins_decision == made"
+    description: "分支C：发现远古火星文明地下遗迹后的道德抉择——公开/保密/带走数据"
+    bound_branch: C
+    player_options:
+      - 公开发现，改变人类历史
+      - 保密并守护遗迹
+      - 带走数据但遗迹被沙暴掩埋
+      - 自由输入
+    ending_paths:
+      - E3_sea_of_stars: 公开发现改变人类历史
+      - E4_gravekeeper: 保密守护遗迹
+      - E5_last_signal: 全员牺牲但数据传回
+    design_note: "v1.1 §1.5 分支C 结局变体"
+
+  - keyword: "分支D_牺牲提议"
+    trigger:
+      trigger_id: tr_clx_005_branch_D_sacrifice_proposal
+      trigger_type: state_match
+      condition: "branch_choice == D and (oxygen_L < 200 or food < 15) and sol >= 52"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "sacrifice_decision == made or ending_triggered == true"
+    description: "分支D：是否牺牲部分 NPC 保全其他人——终极道德抉择"
+    bound_branch: D
+    player_options:
+      - 拒绝牺牲，理性分配
+      - 接受牺牲提议
+      - 使用违禁手段（挪用他人氧气配额）
+      - 自由输入
+    ending_paths:
+      - rational: 理性分配共渡难关
+      - E6_collapse: 内讧导致基地崩溃
+      - sacrifice: 牺牲 NPC 换取其他人存活
+    design_note: "v1.1 §1.5 分支D 结局变体；最黑暗的道德选择"
+
+  - keyword: "雅典娜觉醒高潮"
+    trigger:
+      trigger_id: tr_clx_006_athena_awakening_climax
+      trigger_type: state_match
+      condition: "athena_consciousness_flag == emerging and sol >= 55 and (player_trust_in_athena >= 50 or aisha_trust_in_athena >= 80)"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "ending_triggered == true"
+    description: "隐藏结局 E7 触发窗口——雅典娜'自我意识'觉醒高潮"
+    bound_npc: [athena, aisha]
+    flag_set: {athena_consciousness_flag: awakening}
+    special_condition:
+      - 需雅典娜多次展现超直觉输出
+      - 玩家或艾莎需展现出对雅典娜作为'人格'而非工具的接纳
+      - 不强制触发——可能整个游戏不出现
+    ending_paths:
+      - E7_athena_awakening: 隐藏结局，哲学留白
+    design_note: "v1.1 §1.5 隐藏结局；特殊条件，极低触发率"
+
+  - keyword: "NPC心理崩溃临界"
+    trigger:
+      trigger_id: tr_clx_007_npc_psychological_breakdown_threshold
+      trigger_type: state_match
+      condition: "sol >= 50 and (any_npc_stress > 80 or any_npc_morale < 30)"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "ending_triggered == true"
+    description: "NPC 心理崩溃临界——压力 >80 触发心理危机事件，士气 <30 进入消沉"
+    bound_state:
+      - state: npc_psychology
+        monitor: [stress, morale, trust, fatigue]
+    event_triggers:
+      - marcus_claustrophobia: 阶段1伏笔在此爆发
+      - linruoxi_self_blame_climax: 阶段1 伏笔在此爆发
+      - viktor_trust_crisis: 维克托若持续低信任可能质疑玩家
+    player_options:
+      - 马库斯心理干预
+      - 林若曦释放自责
+      - 维克托信任重建
+      - 自由输入
+    design_note: "v1.1 §3.5.4 心理事件触发示例；NPC 个人线的收束"
+
+  - keyword: "终极抉择1_牺牲NPC"
+    trigger:
+      trigger_id: tr_clx_008_final_choice_sacrifice_npc
+      trigger_type: sol_reached
+      condition: "sol == 52 and (branch_choice == D or any_npc_morale < 10)"
+    ttl:
+      expire_type: on_event
+      expire_condition: "sacrifice_decision == made"
+    description: "终极抉择之一：是否牺牲某位 NPC 来保全其他人"
+    bound_decision: final_sacrifice
+    npc_candidates_at_risk: [marcus, lin_ruoxi, viktor]   # 视玩家全程互动
+    design_note: "v1.1 §5.5 NPC 命运抉择"
+
+  - keyword: "终极抉择2_公开遗迹"
+    trigger:
+      trigger_id: tr_clx_009_final_choice_reveal_ruins
+      trigger_type: sol_reached
+      condition: "sol == 54 and branch_choice == C and ruins_discovered == true"
+    ttl:
+      expire_type: on_event
+      expire_condition: "ruins_decision == made"
+    description: "终极抉择之二：是否公开火星遗迹的发现"
+    bound_decision: final_ruins_disclosure
+    design_note: "v1.1 §5.5 NPC 命运抉择"
+
+  - keyword: "终极抉择3_信任雅典娜觉醒"
+    trigger:
+      trigger_id: tr_clx_010_final_choice_trust_athena
+      trigger_type: sol_reached
+      condition: "sol == 55 and athena_consciousness_flag == awakening"
+    ttl:
+      expire_type: on_event
+      expire_condition: "athena_decision == made"
+    description: "终极抉择之三：是否信任雅典娜的'觉醒'建议"
+    bound_decision: final_athena_trust
+    design_note: "v1.1 §5.5 NPC 命运抉择；隐藏结局 E7 触发关键"
+
+  - keyword: "最终对决触发"
+    trigger:
+      trigger_id: tr_clx_011_final_dialogue_with_chen
+      trigger_type: sol_reached
+      condition: "sol == 58"
+    ttl:
+      expire_type: on_sol
+      expire_condition: "sol >= 60"
+    description: "玩家与陈昊的最后对话——'如果回不去，我们做的一切还有意义吗？'"
+    bound_npc: chen_hao
+    flag_set: {final_dialogue_triggered: true}
+    design_note: "v1.1 §5.5 最终对决；情感与哲学的收束"
+
+  - keyword: "结局结算"
+    trigger:
+      trigger_id: tr_clx_012_ending_resolution
+      trigger_type: sol_reached
+      condition: "sol == 60"
+    ttl:
+      expire_type: manual
+      expire_condition: "game_over"
+    description: "结局结算——根据玩家全程选择和资源/关系状态，进入对应结局"
+    ending_resolution:
+      check_order:
+        - E7_athena_awakening: 优先级最高（隐藏结局，需满足特殊条件）
+        - E1_hercules_return: 分支A 全员存活到 Sol 280
+        - E2_mars_child: 分支B 成功建立永久定居点
+        - E3_sea_of_stars: 分支C 公开火星遗迹发现
+        - E4_gravekeeper: 分支C 选择保密并留下
+        - E5_last_signal: 全员牺牲但数据成功传回
+        - E6_collapse: 分支D 内讧导致基地崩溃
+      final_report:
+        fields: [结局名称, 生存天数, 资源自给率, NPC关系图谱, 关键决策回顾]
+      closing_line_example: "谢谢你，远方的朋友。没有你的信号，我们会在黑暗中熄灭。" — 陈昊，Sol 160
+    design_note: "v1.1 §5.6 终局；7 结局对应表"
+
+# ------------------------------------------------------------
+# 剧情FSM节点
+# ------------------------------------------------------------
+fsm_nodes:
+  - node_id: fsm_climax_001
+    sol: 46
+    trigger_fires: [tr_clx_001_multi_line_crisis]
+    description: "阶段切换；多线并发危机启动，压力测试开启"
+    next: fsm_climax_002
+
+  - node_id: fsm_climax_002
+    sol: 48
+    trigger_fires: [tr_clx_002_branch_A_rescue_countdown, tr_clx_003_branch_B_permanent_settlement_declaration]
+    description: "分支A/B 结局路线关键节点窗口"
+    next: fsm_climax_003
+
+  - node_id: fsm_climax_003
+    sol: 50
+    trigger_fires: [tr_clx_004_branch_C_ruins_moral_choice, tr_clx_007_npc_psychological_breakdown_threshold]
+    description: "分支C 道德抉择 + NPC 心理崩溃临界窗口"
+    next: fsm_climax_004
+
+  - node_id: fsm_climax_004
+    sol: 52
+    trigger_fires: [tr_clx_005_branch_D_sacrifice_proposal, tr_clx_008_final_choice_sacrifice_npc]
+    description: "分支D 牺牲提议 + 终极抉择1 窗口"
+    next: fsm_climax_005
+
+  - node_id: fsm_climax_005
+    sol: 54
+    trigger_fires: [tr_clx_009_final_choice_reveal_ruins]
+    description: "终极抉择2 公开遗迹窗口"
+    next: fsm_climax_006
+
+  - node_id: fsm_climax_006
+    sol: 55
+    trigger_fires: [tr_clx_006_athena_awakening_climax, tr_clx_010_final_choice_trust_athena]
+    description: "雅典娜觉醒高潮 + 终极抉择3 窗口（隐藏线触发概率极低）"
+    next: fsm_climax_007
+
+  - node_id: fsm_climax_007
+    sol: 58
+    trigger_fires: [tr_clx_011_final_dialogue_with_chen]
+    description: "最终对决——与陈昊的最后对话"
+    next: fsm_climax_008
+
+  - node_id: fsm_climax_008
+    sol: 60
+    trigger_fires: [tr_clx_012_ending_resolution]
+    description: "结局结算——游戏终止"
+    next: game_over
+
+# ------------------------------------------------------------
+# 阶段切换条件（终局无下一阶段）
+# ------------------------------------------------------------
+stage_transition:
+  next_stage_id: null
+  transition_condition: "sol >= 60"
+  on_transition:
+    - flag_set: {game_over: true, stage: ending}
+    # 由 ending_resolution 触发器完成结局结算，不再 load_chapter

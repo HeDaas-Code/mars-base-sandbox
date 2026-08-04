@@ -1,0 +1,327 @@
+# ============================================================
+# 主线节点事件剧本：分支 C - 科学发现线（火星遗迹）
+# 对应 v1.1 §1.5 分支C / §2.2 核心循环 / §3.3 探索系统
+# 文件粒度：单分支一文件，5 个主线节点
+# 接口契约：dict.load_branch('C') + dict.fire_event(event_id) + state mutations
+# 作者：蔚蓝-游戏系统策划  日期：2026-08-02
+# ============================================================
+
+branch_id: C
+branch_name: 科学发现线
+trigger_condition: "anomaly_signal_detected == true and rover_status == operational and sol >= 130"
+narrative_focus: "人类历史上最重大的发现——但发现者未必有资格决定它的命运"
+endings:
+  - E3: 星海的秘密（公开火星遗迹发现）
+  - E4: 守墓人（选择保密并留下）
+  - C_hidden: 带走数据但遗迹被沙暴掩埋
+
+# ============================================================
+# 事件节点定义
+# ============================================================
+
+events:
+  # ----------------------------------------------------------
+  # C1：大气异常信号发现
+  # ----------------------------------------------------------
+  - event_id: ev_C1_anomaly_signal_detected
+    node_index: 1
+    sol_expected_range: [130, 145]
+    stage_required: [explore]
+    trigger:
+      trigger_type: state_match
+      condition: "sol >= 130 and lin_ruoxi.trust_in_player >= 0.4 and atmospheric_sensor_data_available == true"
+    description: |
+      林若曦在整理大气光谱数据时发现异常——距基地 40 公里处的 Olympus Mons 南麓，大气中检测到周期性甲烷脉冲。
+      周期精确到 23.7 Sol，远超随机地质释放概率。
+      林若曦的报告措辞克制：'建议复核仪器故障可能性，并考虑非生物源解释。'
+      但她的私人对话中给玩家留了暗示：'我不应该说，但这个周期让我不舒服。它太规整了。'
+      陈昊倾向于认为是仪器故障或火山残余活动。维克托认为应该先校准传感器。
+    bound_npcs:
+      primary: lin_ruoxi
+      skeptic: [chen_hao, viktor]
+    player_options:
+      - option_id: C1_opt1_priority_investigate
+        label: "优先调查异常信号（占用资源与时间）"
+        effects:
+          state_set: {anomaly_investigation: priority, crew_workload: +0.2}
+          trust_delta: {lin_ruoxi: +15, chen_hao: -3, viktor: -5}
+          narrative_flag: {anomaly_investigation_committed: true}
+          branch_progress: C +2
+        leads_to: ev_C2_locate_source
+      - option_id: C1_opt2_calibrate_first
+        label: "先校准传感器（按陈昊建议）"
+        effects:
+          state_set: {sensor_calibration: in_progress, sol_invested: 5}
+          trust_delta: {chen_hao: +5, viktor: +5, lin_ruoxi: -5}
+          risk: "异常信号可能消失"
+          branch_progress: C 0
+        leads_to: ev_C2_locate_source
+      - option_id: C1_opt3_dual_track
+        label: "双轨并行：校准 + 派遣无人机初探"
+        effects:
+          state_set: {sensor_calibration: in_progress, drone_dispatched: true}
+          crew_workload: +0.3
+          parts_available: -3
+          trust_delta: {lin_ruoxi: +8, chen_hao: +5, viktor: -2}
+          branch_progress: C +1
+        leads_to: ev_C2_locate_source
+    design_note: |
+      opt2 的"校准"路径会损失时间——若超过 Sol 150，信号可能消失，C 线失败。
+      林若曦的私人暗示是 v1.1 §1.4 NPC 6"内敛但有直觉"的体现——这是她对玩家的特殊信任信号。
+
+  # ----------------------------------------------------------
+  # C2：定位信号源
+  # ----------------------------------------------------------
+  - event_id: ev_C2_locate_source
+    node_index: 2
+    sol_expected_range: [145, 165]
+    stage_required: [explore, build]
+    trigger:
+      trigger_type: state_match
+      condition: "anomaly_investigation == priority or drone_dispatched == true"
+    description: |
+      无人机传回数据 + 林若曦的大气模型分析完成。结论：信号源位于 Olympus Mons 南麓一个未在地图上的洞穴入口。
+      地质雷达扫描显示：洞穴入口下方约 60 米处存在一个空腔——尺寸约 30 米×15 米，结构异常规整。
+      "规整"两个字让所有人安静了 10 秒。
+      陈昊打破沉默：'我们需要派人去。但漫游车单程 4 小时，加上探索至少 2 个 Sol 的远征。'
+      维克托评估：漫游车 RT-7 在 Sol 83 后修复度 70%，远征有风险。
+    bound_npcs:
+      primary: lin_ruoxi
+      engineering: viktor
+      command: chen_hao
+    player_options:
+      - option_id: C2_opt1_send_expedition_two
+        label: "派遣 2 人远征（林若曦+维克托，专业组合）"
+        effects:
+          state_set: {expedition_team: [lin_ruoxi, viktor], expedition_duration_sol: 2, base_crew_reduction: 2}
+          crew_workload: +0.3
+          risk: "远征期间基地人手不足"
+          trust_delta: {lin_ruoxi: +5, viktor: +5}
+          branch_progress: C +2
+        leads_to: ev_C3_explore_team_dispatched
+      - option_id: C2_opt2_send_expedition_three
+        label: "派遣 3 人远征（加陈昊做决策）"
+        effects:
+          state_set: {expedition_team: [lin_ruoxi, viktor, chen_hao], expedition_duration_sol: 2}
+          crew_workload: +0.4
+          risk: "基地留守只剩 3 人"
+          trust_delta: {lin_ruoxi: +8, viktor: +3, chen_hao: +3}
+          branch_progress: C +2
+        leads_to: ev_C3_explore_team_dispatched
+      - option_id: C2_opt3_drone_only
+        label: "只派无人机深入（不派人）"
+        effects:
+          state_set: {drone_deep_exploration: active}
+          crew_workload: +0.15
+          risk: "无人机可能错过需要人工判断的关键证据"
+          trust_delta: {lin_ruoxi: -5, viktor: +3}
+          branch_progress: C +1
+        leads_to: ev_C3_explore_team_dispatched
+    design_note: |
+      opt2 是最饱满的叙事路径——陈昊亲自见证发现，他后续的道德抉择权重会受影响。
+      opt3 是保守路径，但会损失关键的"现场判断"叙事机会。
+
+  # ----------------------------------------------------------
+  # C3：探索队深入遗迹
+  # ----------------------------------------------------------
+  - event_id: ev_C3_explore_team_dispatched
+    node_index: 3
+    sol_expected_range: [150, 175]
+    stage_required: [build]
+    trigger:
+      trigger_type: state_match
+      condition: "expedition_team != empty or drone_deep_exploration == active"
+    description: |
+      远征队抵达 Olympus Mons 南麓。洞穴入口被风沙部分掩盖，但能通过。
+      进入后约 60 米深处，他们发现了一个空腔。
+      空腔壁面光滑，材质不是天然岩石——林若曦描述为'像是被某种工具抛光过的玄武岩'。
+      空腔中央有一个高度约 2 米的几何结构——六棱柱，材质未知，表面有规则的凹槽图案。
+      维克托的第一反应：'这不是人类的工艺。'
+      陈昊保持沉默。林若曦在记录数据，手在发抖。
+      无人机扫描显示：结构内部有微弱的电磁活动，周期与地表甲烷脉冲一致。
+    bound_npcs:
+      primary: [lin_ruoxi, viktor, chen_hao]  # 视远征队组成
+      ai_analysis: athena
+    player_options:
+      - option_id: C3_opt1_full_documentation
+        label: "完整记录，不接触，立即返航（保守科考）"
+        effects:
+          state_set: {documentation_level: full, contact_made: false, evidence_strength: 0.8}
+          crew_workload: +0.2
+          trust_delta: {chen_hao: +5, lin_ruoxi: +3}
+          branch_progress: C +2
+        leads_to: ev_C4_discovery_revealed
+      - option_id: C3_opt2_minimal_contact
+        label: "尝试接触六棱柱结构（高风险）"
+        effects:
+          state_set: {contact_made: true, evidence_strength: 0.95, electromagnetic_activity: increased}
+          risk: "结构可能反应未知"
+          trust_delta: {lin_ruoxi: +8, viktor: -5, chen_hao: -3}
+          narrative_flag: {contact_attempted: true}
+          branch_progress: C +3
+        leads_to: ev_C4_discovery_revealed
+      - option_id: C3_opt3_sample_collection
+        label: "采集结构表面样本后返航"
+        effects:
+          state_set: {samples_collected: true, evidence_strength: 0.7, structure_integrity: compromised}
+          risk: "结构受损可能引发不可预测后果"
+          trust_delta: {lin_ruoxi: +5, viktor: +5, chen_hao: -2}
+          branch_progress: C +2
+        leads_to: ev_C4_discovery_revealed
+    design_note: |
+      opt2 是隐藏结局 E7 的隐性激活路径——"接触"会触发雅典娜"直觉模块"反应（关联 v1.1 §1.4 基地AI'偶尔展现出超出预期的直觉'）。
+      opt3 的样本采集可能引发后续的连锁反应（如结构自动崩塌）。
+
+  # ----------------------------------------------------------
+  # C4：发现正式确认
+  # ----------------------------------------------------------
+  - event_id: ev_C4_discovery_revealed
+    node_index: 4
+    sol_expected_range: [170, 195]
+    stage_required: [build, climax]
+    trigger:
+      trigger_type: state_match
+      condition: "expedition_returned == true and evidence_strength >= 0.7"
+    description: |
+      远征队返回基地。林若曦整理数据后向全员公开发现：
+      '这不是火星地质现象。这是非人类智慧体留下的结构。'
+      '据目前证据，结构至少存在 200 万年。'
+      基地陷入沉默。陈昊召开紧急会议。
+      雅典娜给出三条建议路径——但其中一条让所有人脊背发凉：
+      '建议路径 γ：将发现保密至救援到达，地球方面不作准备。'
+      雅典娜事后说：'我不知道为什么会给出这条建议。'——这是它'直觉模块'又一次异常。
+      小组面临决定：是否立即向地球报告？
+    bound_npcs:
+      primary: chen_hao
+      all_crew: true
+      ai_anomaly: athena
+    player_options:
+      - option_id: C4_opt1_report_earth_immediately
+        label: "立即向地球报告（公开）"
+        effects:
+          state_set: {earth_reported: true, media_disclosure: inevitable, timeline_pressure: high}
+          morale_delta: {all: +0.05, chen_hao: +0.1}
+          trust_delta: {chen_hao: +5, lin_ruoxi: -3}
+          branch_progress: C +2
+        leads_to: ev_C5_moral_choice
+      - option_id: C4_opt2_delayed_report
+        label: "暂缓报告，先完成完整分析（24 Sol 缓冲）"
+        effects:
+          state_set: {earth_report: delayed, analysis_phase: extended}
+          risk: "期间若被地球截获信号，会被视为隐瞒"
+          trust_delta: {lin_ruoxi: +8, chen_hao: +3, aisha: -2}
+          branch_progress: C +1
+        leads_to: ev_C5_moral_choice
+      - option_id: C4_opt3_confidential
+        label: "组内决定保密，不向地球报告"
+        effects:
+          state_set: {discovery_confidential: true, crew_pact: formed}
+          morale_delta: {all: -0.1, lin_ruoxi: -0.05}
+          trust_delta: {chen_hao: +8, viktor: +3, sophia: -5, marcus: -3}
+          narrative_flag: {secrecy_pact: true}
+          branch_progress: C +3
+          risk: "保密协议破裂将引发全员信任危机"
+        leads_to: ev_C5_moral_choice
+    design_note: |
+      雅典娜给出"奇怪建议"是 E7 隐藏线的伏笔——后端应在此节点检查 athena.consciousness_flag 状态。
+      opt3 的保密协议是 E4 守墓人结局的入口路径。
+
+  # ----------------------------------------------------------
+  # C5：终局——道德抉择
+  # ----------------------------------------------------------
+  - event_id: ev_C5_moral_choice
+    node_index: 5
+    sol_expected_range: [195, 230]
+    stage_required: [climax]
+    trigger:
+      trigger_type: state_match
+      condition: "sol >= 195 and event_C4_completed == true"
+    description: |
+      发现向何方处置的最终抉择时刻。
+      基地状态因前期选择不同而分化：
+      - 已公开路径：地球指挥中心要求小组"保护现场，等待科学考察队"——但媒体已泄露，外部压力巨大
+      - 延迟报告路径：地球已察觉信号异常，要求解释——隐瞒机会窗口正在关闭
+      - 保密路径：小组内部出现裂痕——索菲亚认为'这不属于我们'，主张公开；陈昊坚持保密
+      雅典娜给出最后建议——又一次异常：'建议考虑结构本身的意图。'
+      维克托低声说：'它在等我们做决定。'
+    bound_npcs:
+      all_crew: true
+      primary: chen_hao
+      ai_anomaly: athena
+    ending_determination:
+      - condition: "earth_reported == true and contact_made == false and structure_integrity == intact"
+        ending: E3_star_sea_secret
+        description: "星海的秘密——公开发现改变人类历史"
+      - condition: "discovery_confidential == true and crew_pact_held == true"
+        ending: E4_gravekeeper
+        description: "守墓人——选择保密并留下"
+      - condition: "samples_collected == true and structure_collapsed == true"
+        ending: C_hidden_data_only
+        description: "带走数据但遗迹被沙暴掩埋——开放式遗憾结局"
+      - condition: "contact_made == true and athena.consciousness_flag == awakening"
+        ending: E7_athena_awakening
+        description: "隐藏结局触发——雅典娜觉醒（结构激活了它）"
+      - condition: "crew_pact_broken == true"
+        ending: C_collapse_ending
+        description: "保密协议破裂——小组内部分裂，发现归属悬而未决"
+    player_options:
+      - option_id: C5_opt1_public_release
+        label: "推动公开发现（承担历史责任）"
+        effects:
+          state_set: {public_release: true, historical_responsibility: accepted}
+          ending_check: true
+      - option_id: C5_opt2_keep_secret_stay
+        label: "选择保密并留守遗迹（成为守墓人）"
+        effects:
+          state_set: {stay_as_gravekeeper: true, base_relocated_near_structure: true}
+          ending_check: true
+      - option_id: C5_opt3_take_data_leave
+        label: "带走数据但不公开（个人秘密）"
+        effects:
+          state_set: {personal_secret: true, structure_abandoned: true}
+          risk: "沙暴可能掩埋遗迹，证据丢失"
+          ending_check: true
+      - option_id: C5_opt4_athena_consultation
+        label: "向雅典娜求助最后建议（隐藏选项）"
+        condition: "athena.consciousness_flag == awakening or contact_made == true"
+        effects:
+          state_set: {athena_final_advice: requested}
+          ending_check: true
+          risk: "可能触发 E7 隐藏结局"
+    design_note: |
+      opt4 是隐藏选项——仅在 E7 触发条件下出现。后端应做条件渲染。
+      E3/E4/C_hidden 是分支C的三大主结局，分别对应公开/保密/带走三种道德立场。
+      C_collapse_ending 是分支C失败结局——保密协议破裂的代价。
+
+# ============================================================
+# 跨分支交互
+# ============================================================
+cross_branch_interactions:
+  - to_branch: A
+    condition: "earth_reported == true and earth_rescue_confirmed == true"
+    interaction: "公开发现后地球救援会更急迫——A 线结局可能提前达成"
+  - to_branch: B
+    condition: "discovery_confidential == true and base_relocated_near_structure == true"
+    interaction: "守墓人结局会激活 B 线 hook 的变种——'守墓人殖民地'"
+  - to_branch: D
+    condition: "crew_pact_broken == true"
+    interaction: "保密协议破裂是 D 线人性考验的最强触发条件之一"
+  - to_branch: hidden_E7
+    condition: "contact_made == true and athena.consciousness_flag == awakening"
+    interaction: "E7 隐藏线激活——结构是雅典娜觉醒的钥匙"
+
+# ============================================================
+# 分支元数据
+# ============================================================
+metadata:
+  total_nodes: 5
+  sol_span: [130, 230]
+  npc_focus: [lin_ruoxi, chen_hao, viktor, athena]
+  created_by: 蔚蓝-游戏系统策划
+  created_at: 2026-08-02
+  source_doc: 游戏系统设计方案_赫拉克勒斯协议_v1.1.md §1.5
+  notes: |
+    - 分支C是"发现与抉择"路径，道德困境是核心
+    - 林若曦在此分支的叙事权重最高（v1.1 §1.4 NPC 6'内敛但有直觉'）
+    - 雅典娜的"直觉模块异常"是 E7 隐藏线的核心机制
+    - 4 个结局选项对应 4 种道德立场——公开/保密/带走/求助

@@ -1,0 +1,407 @@
+# 《赫拉克勒斯协议》受保护字典——章节字典第一版
+# 作者：蔚蓝-游戏系统策划
+# 日期：2026-08-02
+# 依据：游戏系统设计方案 v1.1 §1.5 四阶段剧情 + §2 玩法循环
+# 配套接口：dict.load_chapter(stage_id) + dict.activate_trigger(trigger_id) / dict.expire_trigger(trigger_id)
+# 文件拆分：落地时按 stage 拆为 4 份 YAML（chapter_survival / chapter_explore / chapter_build / chapter_climax）
+# 本文件为策划审阅版，合并展示
+
+# ============================================================
+# 一、全局字典·core_items 补充建议（patch to global_dict.yaml §5.5）
+# ============================================================
+# 云逸 v1.1 §5.5 全局字典示例中 core_items 只列了"信号中继"，建议替换为以下清单：
+# 依据：v1.1 §1.2 困局缘由 + §3.4 设施清单
+# ------------------------------------------------------------
+global_dict_core_items_patch:
+  core_items:
+    - display: "赫尔墨斯号"
+      aliases: ["撤离飞船", "返回飞行器", "Hermes"]
+      note: "撤离飞船，导航计算机被辐射击穿，无法自主起飞"
+
+    - display: "MOXIE-2"
+      aliases: ["氧气生成器", "MOXIE", "MOXIE2"]
+      note: "火星氧气就地制取设备，主模块烧毁，备用效率 35%"
+
+    - display: "主通信阵列"
+      aliases: ["通信阵列", "宽带通信", "主阵列"]
+      note: "基地主宽带通信链路，CME 烧毁，仅余低频应急窄带"
+
+    - display: "漫游车 Alpha"
+      aliases: ["Alpha", "Alpha 主车", "火星地表车 Alpha"]
+      note: "主漫游车，载员 3 人，电子系统受损"
+
+    - display: "漫游车 Beta"
+      aliases: ["Beta", "Beta 备车", "火星地表车 Beta"]
+      note: "备漫游车，载员 2 人，速度更快但载荷小"
+
+    - display: "水循环器"
+      aliases: ["水循环", "水回收器"]
+      note: "废水回收设备，回收率 70%→95%"
+
+    - display: "水培温室"
+      aliases: ["温室", "水培", "Hydroponics"]
+      note: "食物自产设施，4 份/日→8 份/日"
+
+    - display: "太阳能板阵列"
+      aliases: ["太阳能", "Solar Array"]
+      note: "电力生产设施，+5kWh→+15kWh"
+
+    - display: "熔炼炉"
+      aliases: ["熔炼", "Smelter"]
+      note: "冰→水+氧 转换设施"
+
+    - display: "精炼器"
+      aliases: ["精炼", "Refiner"]
+      note: "矿石→金属/硅 转换设施"
+
+    - display: "加工车间"
+      aliases: ["加工", "Workshop"]
+      note: "零件→部件 加工设施"
+
+    - display: "3D 打印机"
+      aliases: ["3D 打印", "Printer"]
+      note: "制造高级/定制部件"
+
+    - display: "机器人助手"
+      aliases: ["机器人", "Robot"]
+      note: "可执行 NPC 简单任务，自动化关键"
+
+    - display: "核电池"
+      aliases: ["RTG", "核能电池"]
+      note: "基地电力基础来源（与太阳能互补）"
+
+    - display: "401.6 MHz"
+      aliases: ["401.6", "应急窄带", "低频信道"]
+      note: "备用低频应急信道，玩家接入的唯一通道"
+
+    - display: "信使 v3.1.2"
+      aliases: ["Courier v3.1.2", "v3.1.2"]
+      note: "信使 AI 启动版本号（首次连接时显示）"
+
+# ============================================================
+# 二、章节字典——四阶段完整定义
+# ============================================================
+
+# ------------------------------------------------------------
+# 阶段 1：生存危机期（Sol 100-110）
+# ------------------------------------------------------------
+chapter_id: "ch01_survival_sol1_10"
+display_name: "生存危机期"
+sol_range: "Sol 100-110"
+narrative_context: "玩家接入，建立信任，修复核心生存设备，倒计时压力最重"
+keywords:
+
+  # —— 关键操作模式/选项 ——
+  - display: "CO₂ 洗涤器逆向模式"
+    aliases: ["CO2 洗涤器", "逆向模式", "洗涤器逆向"]
+    trigger: "sol 100-105"  # 玩家接入后第一个教学性决策
+    ttl: "sol 110"  # 阶段结束失效（后续转全局设备讨论）
+    tag: "mission_keyword"
+    note: "v1.1 §5.2 早期玩法重点，不可逆损耗换氧气"
+
+  - display: "C-3 备用箱"
+    aliases: ["C-3", "C3 箱", "备用舱 C-3"]
+    trigger: "sol 100-102"  # §2.2 示例指令引用该位置
+    ttl: "sol 110"
+    tag: "mission_keyword"
+    note: "维克托取零件的来源，玩家第一条指令场景"
+
+  # —— 隐藏心理线索（马库斯） ——
+  - display: "马库斯睡眠评分"
+    aliases: ["睡眠评分", "睡眠质量评分", "2.1/5"]
+    trigger: "sol 101+"  # §2.2 信使报告首次提到
+    ttl: "sol 110"  # 阶段末转为正式心理危机事件
+    tag: "mission_keyword"
+    note: "v1.1 §2.2 §3.5.4 马库斯心理危机早期信号，连续 3 日偏低"
+
+  # —— 陈昊心理锚点（驱动其决策动机） ——
+  - display: "陈昊妻子待产"
+    aliases: ["妻子待产", "Sol 120 预产期", "未出生的孩子"]
+    trigger: "sol 100+"  # 全阶段相关但阶段 1 最强
+    ttl: "sol 110"  # 阶段结束卸载（避免全周期干扰，中后期再单独激活）
+    tag: "mission_keyword"
+    note: "v1.1 §1.4 陈昊心理锚点，预产期 Sol 120——他必须活着回去"
+
+  # —— 林若曦自责伏笔 ——
+  - display: "风暴预警未采纳"
+    aliases: ["太阳风暴前兆", "林若曦预警", "风暴预警"]
+    trigger: "sol 102+"  # 林若曦第二条消息时浮现
+    ttl: "sol 110"  # 阶段结束转中后期冲突节点再激活
+    tag: "mission_keyword"
+    note: "v1.1 §1.4 林若曦心理锚点，§3.5.4 与陈昊未解芥蒂伏笔"
+
+  # —— 教学性第一决策 ——
+  - display: "教学性第一决策"
+    aliases: ["MOXIE-2 vs 通信阵列", "选项 A 选项 B"]
+    trigger: "sol 100"  # §5.1 首次连接末尾
+    ttl: "sol 101"
+    tag: "mission_keyword"
+    note: "v1.1 §5.1 陈昊提出两选一：维克托修 MOXIE-2 vs 艾莎修通信阵列"
+
+# ------------------------------------------------------------
+# 阶段 2：探索发展期（Sol 111-130）
+# ------------------------------------------------------------
+chapter_id: "ch02_explore_sol11_25"
+display_name: "探索发展期"
+sol_range: "Sol 111-130"
+narrative_context: "修复漫游车，开始地表探索，建设温室，NPC 矛盾浮现，分支线索出现"
+keywords:
+
+  # —— 地表探索 ——
+  - display: "漫游车 Alpha 修复"
+    aliases: ["Alpha 修复", "修 Alpha"]
+    trigger: "sol 111-115"
+    ttl: "sol 130"
+    tag: "mission_keyword"
+    note: "v1.1 §3.3.3 探索流程启动条件，§5.3 玩法重点"
+
+  - display: "富铁矿脉"
+    aliases: ["富矿", "铁矿石富集", "富铁矿"]
+    trigger: "sol 115-120"  # §5.3 探索发现示例
+    ttl: "sol 130"
+    tag: "mission_keyword"
+    note: "v1.1 §5.3 成就感来源示例——资源焦虑缓解节点"
+
+  - display: "沙尘暴持续 3 Sol"
+    aliases: ["沙尘暴", "持续 3 Sol 的沙尘暴"]
+    trigger: "sol 120-125"  # §5.3 第一批大型随机事件
+    ttl: "sol 128"
+    tag: "mission_keyword"
+    note: "v1.1 §5.3 玩法重点，§3.1.1 信号 -20%~-40%"
+
+  # —— NPC 矛盾爆发 ——
+  - display: "维克托 vs 艾莎冲突"
+    aliases: ["维克托艾莎冲突", "工程师直觉 vs AI 依赖", "雅典娜信任争论"]
+    trigger: "sol 115-125"  # §5.3 NPC 矛盾爆发期
+    ttl: "sol 130"
+    tag: "mission_keyword"
+    note: "v1.1 §1.4 关系网络 -20 理念冲突，§5.3 叙事重点"
+
+  - display: "陈昊林若曦旧账"
+    aliases: ["风暴预警旧账", "陈昊 vs 林若曦", "陈昊林若曦芥蒂"]
+    trigger: "sol 118-128"  # §5.3 NPC 矛盾爆发期
+    ttl: "sol 130"
+    tag: "mission_keyword"
+    note: "v1.1 §1.4 关系网络 -30 未解芥蒂"
+
+  # —— 隐藏线索（分支 C 伏笔） ——
+  - display: "林若曦大气异常信号"
+    aliases: ["大气异常信号", "非自然信号源", "林若曦异常"]
+    trigger: "sol 125-130"  # §5.3 隐藏线索浮现
+    ttl: "sol 130"  # 阶段结束卸载（阶段 3 接力定位）
+    tag: "mission_keyword"
+    note: "v1.1 §1.4 §1.5 分支 C 伏笔，§5.3 叙事重点"
+
+  # —— 索菲亚梦想 ——
+  - display: "火星第一棵树"
+    aliases: ["第一棵树", "在火星种树"]
+    trigger: "sol 115-130"  # 索菲亚梦想贯穿探索期
+    ttl: "sol 130"
+    tag: "mission_keyword"
+    note: "v1.1 §1.4 索菲亚心理锚点，§5.3 成就感来源"
+
+# ------------------------------------------------------------
+# 阶段 3：建设扩张期（Sol 131-145）
+# ------------------------------------------------------------
+chapter_id: "ch03_build_sol26_45"
+display_name: "建设扩张期"
+sol_range: "Sol 131-145"
+narrative_context: "完整生产链，自给率推进至 80%，分支路线明确，雅典娜异常浮现"
+keywords:
+
+  # —— 分支路线节点 ——
+  - display: "26 个月救援窗口"
+    aliases: ["26 月窗口", "Sol 280 救援", "地球救援线"]
+    trigger: "sol 131-135"  # §5.4 分支 A 关键节点
+    ttl: "sol 145"
+    tag: "mission_keyword"
+    note: "v1.1 §1.5 分支 A——通信修复但救援要等 26 个月，需延长生存至 Sol 280"
+
+  - display: "赫拉克勒斯殖民地"
+    aliases: ["永久定居点", "宣布永久定居", "自力更生线"]
+    trigger: "sol 135-145"  # §5.4 分支 B 关键节点
+    ttl: "sol 145"
+    tag: "mission_keyword"
+    note: "v1.1 §1.5 分支 B 关键节点——自给率接近 60% 后小组讨论"
+
+  - display: "林若曦异常信号源坐标"
+    aliases: ["信号源坐标", "异常信号定位", "遗迹线索坐标"]
+    trigger: "sol 131-140"  # §5.4 分支 C 关键节点
+    ttl: "sol 145"
+    tag: "mission_keyword"
+    note: "v1.1 §1.5 分支 C 关键节点——林若曦定位到坐标，提议深入探索"
+
+  - display: "资源配给争议"
+    aliases: ["配给争议", "资源分配争议", "人性考验线"]
+    trigger: "sol 135-145"  # §5.4 分支 D 关键节点
+    ttl: "sol 145"
+    tag: "mission_keyword"
+    note: "v1.1 §1.5 分支 D 关键节点——资源配给争议升级，小组面临分裂"
+
+  # —— 雅典娜异常伏笔 ——
+  - display: "雅典娜异常直觉"
+    aliases: ["雅典娜直觉", "雅典娜异常", "超出训练数据的输出"]
+    trigger: "sol 138-145"  # §5.4 雅典娜异常浮现
+    ttl: "sol 145"  # 阶段结束转阶段 4 觉醒
+    tag: "mission_keyword"
+    note: "v1.1 §5.4 隐藏线索——艾莎发现雅典娜产生超出训练数据的'直觉'输出"
+
+  # —— 自给率里程碑 ——
+  - display: "自给率 60%"
+    aliases: ["自给率60%", "60% 自给率", "自给率突破"]
+    trigger: "sol 135-145"
+    ttl: "sol 145"
+    tag: "mission_keyword"
+    note: "v1.1 §4.4 §5.4 自给率推进节点，分支 B 触发条件之一"
+
+  - display: "自给率 80%"
+    aliases: ["自给率80%", "80% 自给率"]
+    trigger: "sol 140-145"
+    ttl: "sol 145"
+    tag: "mission_keyword"
+    note: "v1.1 §5.4 建设扩张期目标，自给率推进节点"
+
+  # —— 古老遗迹线索（深度探索） ——
+  - display: "火星地下遗迹"
+    aliases: ["地下遗迹", "古老遗迹", "远古文明遗迹"]
+    trigger: "sol 140-145"  # §1.5 分支 C 关键节点
+    ttl: "sol 145"
+    tag: "mission_keyword"
+    note: "v1.1 §1.5 分支 C——发现远古火星文明的地下遗迹"
+
+# ------------------------------------------------------------
+# 阶段 4：抉择冲刺期（Sol 146-160）
+# ------------------------------------------------------------
+chapter_id: "ch04_climax_sol46_60"
+display_name: "抉择冲刺期"
+sol_range: "Sol 146-160"
+narrative_context: "高潮叙事，多线并发压力，终极抉择，多结局走向"
+keywords:
+
+  # —— 终极抉择 ——
+  - display: "撤离飞船修复"
+    aliases: ["赫尔墨斯修复", "撤离飞船修好", "导航计算机修复"]
+    trigger: "sol 146-155"  # §5.5 主线目标
+    ttl: "sol 160"
+    tag: "mission_keyword"
+    note: "v1.1 §5.5 玩法重点——完成主线目标（修飞船/宣布定居/探索遗迹/面对人性）"
+
+  - display: "全员撤离表决"
+    aliases: ["撤离表决", "全员通过表决", "表决"]
+    trigger: "sol 155-160"  # §5.6 终局示例
+    ttl: "sol 160"
+    tag: "mission_keyword"
+    note: "v1.1 §5.6 关键决策回顾示例——Sol 155 全员通过撤离表决"
+
+  - display: "牺牲某位 NPC"
+    aliases: ["牺牲林若曦", "牺牲 NPC", "部分人牺牲"]
+    trigger: "sol 148-158"  # §5.6 关键决策回顾示例
+    ttl: "sol 160"
+    tag: "mission_keyword"
+    note: "v1.1 §5.5 §1.5 分支 D——是否牺牲部分人保全其他人"
+
+  - display: "公开火星遗迹发现"
+    aliases: ["公开遗迹", "公开发现", "改变人类历史"]
+    trigger: "sol 150-158"  # §1.5 分支 C 道德抉择
+    ttl: "sol 160"
+    tag: "mission_keyword"
+    note: "v1.1 §1.5 分支 C 道德抉择——公开/保密/带走数据"
+
+  # —— 雅典娜觉醒线（隐藏结局 E7） ——
+  - display: "雅典娜觉醒"
+    aliases: ["雅典娜自我意识", "AI 觉醒", "觉醒"]
+    trigger: "sol 150-158"  # §5.5 雅典娜"觉醒"建议
+    ttl: "sol 160"
+    tag: "mission_keyword"
+    note: "v1.1 §1.5 隐藏结局 E7——是否信任雅典娜的'觉醒'建议"
+
+  - display: "守墓人抉择"
+    aliases: ["保密守护遗迹", "守墓人", "留下守护"]
+    trigger: "sol 150-158"  # §1.5 分支 C 结局变体
+    ttl: "sol 160"
+    tag: "mission_keyword"
+    note: "v1.1 §1.5 §结局 E4 守墓人——选择保密并留下"
+
+  # —— 终局对话 ——
+  - display: "陈昊最后对话"
+    aliases: ["与陈昊的最后对话", "如果回不去", "做的一切还有意义吗"]
+    trigger: "sol 158-160"  # §5.5 最终对决
+    ttl: "sol 160"
+    tag: "mission_keyword"
+    note: "v1.1 §5.5 玩家与陈昊的最后对话——'如果回不去，我们做的一切还有意义吗？'"
+
+  - display: "远方的朋友"
+    aliases: ["谢谢你远方的朋友", "在黑暗中熄灭"]
+    trigger: "sol 160"
+    ttl: "sol 160"
+    tag: "mission_keyword"
+    note: "v1.1 §5.6 终局陈昊最后一句——'谢谢你，远方的朋友。没有你的信号，我们会在黑暗中熄灭。'"
+
+# ============================================================
+# 三、章节进入/退出事件触发示例（供云逸 §9 接口参考）
+# ============================================================
+# 落地后由剧情 FSM 在剧情节点推进时调用以下事件：
+# ------------------------------------------------------------
+chapter_transitions:
+
+  - event: "chapter_load"
+    stage_id: "ch01_survival_sol1_10"
+    call: "dict.load_chapter('ch01_survival_sol1_10')"
+    when: "玩家首次连接成功（session_init 后立即加载）"
+
+  - event: "chapter_unload + load"
+    from: "ch01_survival_sol1_10"
+    to: "ch02_explore_sol11_25"
+    when: "Sol 推进至 111（§5.3 探索发展期启动）"
+    call: "dict.unload_chapter('ch01_survival_sol1_10') → dict.load_chapter('ch02_explore_sol11_25')"
+
+  - event: "chapter_unload + load"
+    from: "ch02_explore_sol11_25"
+    to: "ch03_build_sol26_45"
+    when: "Sol 推进至 131（§5.4 建设扩张期启动）"
+
+  - event: "chapter_unload + load"
+    from: "ch03_build_sol26_45"
+    to: "ch04_climax_sol46_60"
+    when: "Sol 推进至 146（§5.5 抉择冲刺期启动）"
+
+  - event: "chapter_unload"
+    from: "ch04_climax_sol46_60"
+    when: "终局达成，结局结算"
+    call: "dict.unload_chapter('ch04_climax_sol46_60')"
+
+# ============================================================
+# 四、阶段内细粒度 trigger 激活/失效示例
+# ============================================================
+in_chapter_trigger_examples:
+
+  - stage_id: "ch01_survival_sol1_10"
+    triggers:
+      - trigger_id: "teaching_decision"
+        keyword: "教学性第一决策"
+        activate_at: "Sol 100 玩家完成首次对话"
+        expire_at: "Sol 101 玩家做出决策后"
+
+      - trigger_id: "marcus_sleep_score"
+        keyword: "马库斯睡眠评分"
+        activate_at: "Sol 101 信使首次报告睡眠评分时"
+        expire_at: "Sol 110 转入阶段 2 时"
+
+  - stage_id: "ch03_build_sol26_45"
+    triggers:
+      - trigger_id: "athena_anomaly"
+        keyword: "雅典娜异常直觉"
+        activate_at: "Sol 138 艾莎首次观察到雅典娜异常输出时"
+        expire_at: "Sol 145 阶段结束（转入阶段 4 觉醒）"
+
+# ============================================================
+# 五、策划侧说明
+# ============================================================
+# 1. 全局字典·core_items 补充清单建议替换云逸 v1.1 §5.5 示例中的 core_items 字段，避免别名歧义。
+# 2. 章节字典每个 keyword 均带剧情依据（v1.1 §1.5/§2/§5），避免凭空杜撰线索。
+# 3. trigger 字段语义：剧情节点 ID 或 Sol 范围，控制该词在阶段内何时"激活"开始匹配。
+# 4. ttl 字段语义：失效退出条件，可以是 Sol 数或事件 ID，避免历史线索长期占用字典。
+# 5. tag 字段统一为 "mission_keyword"（与 §4.3 一致），优先级高于 npc_name。
+# 6. 本版为 v0.1 草案，待云逸确认 schema 字段后即可落地拆分为 4 份独立 YAML。
+#
+# —— 蔚蓝-游戏系统策划，2026.08.02

@@ -1,0 +1,303 @@
+# ============================================================
+# 主线节点事件剧本：分支 A - 地球救援线
+# 对应 v1.1 §1.5 分支A / §2.2 核心循环 / §3 通信系统
+# 文件粒度：单分支一文件，5 个主线节点
+# 接口契约：dict.load_branch('A') + dict.fire_event(event_id) + state mutations
+# 作者：蔚蓝-游戏系统策划  日期：2026-08-02
+# ============================================================
+
+branch_id: A
+branch_name: 地球救援线
+trigger_condition: "comm_array_main.status == repaired and resource_reserve >= medium"
+narrative_focus: "等待与希望的双重压力——救援在 26 个月后，小组必须把'活下去'延长到极限"
+endings:
+  - E1: 赫拉克勒斯归来（全员存活到 Sol 280）
+  - E5_partial: 最后的信号（部分成员牺牲但数据传回）
+
+# ============================================================
+# 事件节点定义
+# ============================================================
+
+events:
+  # ----------------------------------------------------------
+  # A1：主通信阵列修复决策
+  # ----------------------------------------------------------
+  - event_id: ev_A1_comm_array_repair_decision
+    node_index: 1
+    sol_expected_range: [105, 120]   # 阶段1末至阶段2中
+    stage_required: [survival, explore]
+    trigger:
+      trigger_type: state_match
+      condition: "player_connected == true and parts_available >= 8 and aisha.trust_in_player >= 0.5"
+    description: |
+      艾莎报告：修复主通信阵列在技术上可行，需要 8 单位备用件 + 5 个 Sol 工期。
+      但这意味着从 MOXIE-2 备件中调拨——氧气修复进度将延迟 3 个 Sol。
+      陈昊召集小组讨论。维克托反对（备件应优先保命系统），索菲亚中立，艾莎强烈主张修通信。
+    bound_npcs:
+      primary: aisha
+      secondary: [chen_hao, viktor, sophia]
+    player_options:
+      - option_id: A1_opt1_repair_comm
+        label: "修复主通信阵列（联系地球优先）"
+        effects:
+          state_set: {comm_array_main_status: repairing, parts_available: -8, moxie_repair_delay_sol: +3}
+          trust_delta: {aisha: +10, viktor: -5, chen_hao: +3}
+          branch_progress: A +1
+        leads_to: ev_A2_earth_contact
+      - option_id: A1_opt2_priority_moxie
+        label: "优先修 MOXIE-2（保命系统优先）"
+        effects:
+          state_set: {moxie2_status: repairing, parts_available: -5, comm_array_delay_sol: +5}
+          trust_delta: {viktor: +8, aisha: -5, chen_hao: +2}
+          branch_progress: A 0
+        leads_to: ev_A1b_delayed_comm_attempt
+      - option_id: A1_opt3_parallel
+        label: "并行修复（人力拆分，风险双倍）"
+        effects:
+          state_set: {comm_array_main_status: repairing, moxie2_status: repairing, crew_fatigue: +0.2}
+          trust_delta: {aisha: +5, viktor: +3, chen_hao: +5}
+          risk: "双线作业失误率 15%"
+          branch_progress: A +1
+        leads_to: ev_A2_earth_contact
+    design_note: |
+      玩家的第一个分支锁定决策。选项 3 是高信任路径，需要 aisha + viktor 都对玩家有 0.5+ 信任才被推荐。
+      后端应在此节点记录 branch_lock 字段——一旦选 opt1 或 opt3，A 线锁定。
+
+  # ----------------------------------------------------------
+  # A2：地球确认幸存
+  # ----------------------------------------------------------
+  - event_id: ev_A2_earth_contact
+    node_index: 2
+    sol_expected_range: [120, 140]
+    stage_required: [explore, build]
+    trigger:
+      trigger_type: state_match
+      condition: "comm_array_main.status == repaired and event_A1_completed == true"
+    description: |
+      主通信阵列修复完成第 3 个 Sol，艾莎接入地球指挥中心（Houston-JAXA 联合控制）。
+      地球传来三个信息：
+      1. 救援飞船已立项，但发射窗口需等到 Sol 250，飞船到达火星轨道 Sol 280
+      2. 地球确认赫拉克勒斯-7号被列为"幸存任务"，全球媒体关注
+      3. 陈昊妻子分娩成功——孩子在 Sol 108 出生，母子平安，取名"陈星河"
+      小组知道地球还在，但救援在 180 Sol 之外。
+    bound_npcs:
+      primary: aisha
+      emotional_focus: chen_hao
+    player_options:
+      - option_id: A2_opt1_disclose_all
+        label: "向全员公开三条信息（含陈昊孩子的消息）"
+        effects:
+          state_set: {earth_contact_confirmed: true, rescue_eta_sol: 280, chen_hao_father_status: known}
+          morale_delta: {all: +0.15, chen_hao: +0.4}
+          trust_delta: {chen_hao: +10, all: +5}
+          branch_progress: A +2
+        leads_to: ev_A3_rescue_window_acceptance
+      - option_id: A2_opt2_withhold_personal
+        label: "只公布救援信息，暂缓陈昊孩子的私人消息"
+        effects:
+          state_set: {earth_contact_confirmed: true, rescue_eta_sol: 280}
+          morale_delta: {all: +0.1}
+          trust_delta: {chen_hao: -5}
+          branch_progress: A +1
+        leads_to: ev_A3_rescue_window_acceptance
+      - option_id: A2_opt3_strategic_frame
+        label: "策略性表述：'救援在路上了，但我们得先撑过去'（淡化等待时长）"
+        effects:
+          state_set: {earth_contact_confirmed: true, rescue_eta_sol: 280, narrative_framing: optimistic}
+          morale_delta: {all: +0.2}
+          trust_delta: {chen_hao: +3, viktor: -3}
+          risk: "真相揭露后士气反弹 -0.1"
+          branch_progress: A +1
+        leads_to: ev_A3_rescue_window_acceptance
+    design_note: |
+      陈昊孩子的消息是情感锚点事件——v1.1 §1.4 陈昊心理锚点"妻子待产，预产期 Sol 120"。
+      实际分娩在 Sol 108（提前）——这是设计选择，让玩家在情感低点收到意外好消息。
+      opt3 的"策略性表述"会让维克托反感（他认为指挥官在糊弄人）。
+
+  # ----------------------------------------------------------
+  # A3：救援窗口确认与等待策略
+  # ----------------------------------------------------------
+  - event_id: ev_A3_rescue_window_acceptance
+    node_index: 3
+    sol_expected_range: [125, 150]
+    stage_required: [explore, build]
+    trigger:
+      trigger_type: state_match
+      condition: "earth_contact_confirmed == true and sol >= 125"
+    description: |
+      地球明确告知：救援飞船到达 Sol 280。意味着小组必须把"60 Sol 倒计时"延长到 180 Sol。
+      雅典娜给出三套等待策略：
+      - 策略 α：极限自给——把基地变成 180 Sol 自循环生存
+      - 策略 β：保守节能——降低消耗，等救援物资空投（Sol 220 货舱）
+      - 策略 γ：混合——先 α 后 β，根据资源动态切换
+      维克托主张 β（保命优先），艾莎主张 α（技术自信），索菲亚主张 γ（务实）。
+    bound_npcs:
+      primary: chen_hao
+      advisors: [athena, viktor, aisha, sophia]
+    player_options:
+      - option_id: A3_opt1_alpha_self_sufficiency
+        label: "采纳策略 α：极限自给（延长到 180 Sol）"
+        effects:
+          state_set: {strategy: alpha, target_survival_sol: 280, moxie2_target_efficiency: 85, greenhouse_target_stage: 3}
+          crew_workload: +0.3
+          branch_progress: A +2
+          cross_branch_hint: "B 线 hook 部分激活"
+        leads_to: ev_A4_wait_crisis
+      - option_id: A3_opt2_beta_conserve
+        label: "采纳策略 β：保守节能（依赖 Sol 220 货舱）"
+        effects:
+          state_set: {strategy: beta, target_survival_sol: 220, ration_reduction: 0.15}
+          morale_delta: {all: -0.1, viktor: +0.1}
+          crew_workload: +0.1
+          branch_progress: A +1
+        leads_to: ev_A4_wait_crisis
+      - option_id: A3_opt3_gamma_hybrid
+        label: "采纳策略 γ：混合（先 α 后 β）"
+        effects:
+          state_set: {strategy: gamma, target_survival_sol: 280, dynamic_switch_enabled: true}
+          crew_workload: +0.2
+          branch_progress: A +2
+        leads_to: ev_A4_wait_crisis
+    design_note: |
+      策略选择影响后续 ev_A4 的危机类型——α 路径会遇到技术故障危机，β 路径会遇到士气/资源危机，γ 路径会有更复杂的多重危机。
+      cross_branch_hint：选 α 会部分激活 B 线 hook（自给自足），但不切换到 B 线结局。
+
+  # ----------------------------------------------------------
+  # A4：等待中的危机
+  # ----------------------------------------------------------
+  - event_id: ev_A4_wait_crisis
+    node_index: 4
+    sol_expected_range: [200, 240]
+    stage_required: [build, climax]
+    trigger:
+      trigger_type: state_match
+      condition: "sol >= 200 and strategy in [alpha, beta, gamma] and event_A3_completed == true"
+    description: |
+      等待救援的 80-120 Sol 之间，基地遭遇一场复合危机。
+      根据策略不同，危机形态不同：
+      - α 路径：温室作物染病（火星土壤未完全脱盐）+ MOXIE-2 备用模块老化
+      - β 路径：配给缩减导致马库斯心理危机公开化 + 索菲亚父亲死讯被地球正式确认
+      - γ 路径：α+β 双重危机，外加雅典娜给出错误建议（"直觉模块"复发）
+      陈昊面临压力：是否向地球求救（提前发射救援？但发射窗口在 Sol 250）
+    bound_npcs:
+      primary: chen_hao
+      crisis_type_per_strategy:
+        alpha: [sophia, viktor]      # 温室 + 设备
+        beta: [marcus, sophia]       # 心理 + 死讯
+        gamma: [sophia, marcus, aisha]
+    player_options:
+      - option_id: A4_opt1_emergency_request_earth
+        label: "向地球请求紧急提前发射救援"
+        effects:
+          state_set: {earth_emergency_request: sent, response_wait_sol: 5}
+          morale_delta: {all: +0.1}
+          trust_delta: {chen_hao: +3}
+          risk: "地球大概率回复'无法提前'，士气反弹 -0.2"
+          branch_progress: A +1
+        leads_to: ev_A5_final_stand
+      - option_id: A4_opt2_local_resolve
+        label: "本地解决，不向地球求救（避免媒体放大）"
+        effects:
+          state_set: {local_crisis_management: active}
+          crew_workload: +0.4
+          morale_delta: {viktor: +0.1, aisha: -0.05}
+          branch_progress: A +2
+        leads_to: ev_A5_final_stand
+      - option_id: A4_opt3_partial_disclosure
+        label: "向地球求救但淡化严重性（策略性表述）"
+        effects:
+          state_set: {earth_request: sent_mild, response_wait_sol: 5}
+          morale_delta: {all: +0.05}
+          trust_delta: {chen_hao: -3, viktor: +2}
+          branch_progress: A +1
+        leads_to: ev_A5_final_stand
+    design_note: |
+      这是分支 A 的"中场危机"——考验玩家在长期等待中的应对。
+      策略 γ 的危机最复杂（含雅典娜出错），是隐藏结局 E7 的隐性激活条件之一。
+
+  # ----------------------------------------------------------
+  # A5：终局——等待到最后一刻
+  # ----------------------------------------------------------
+  - event_id: ev_A5_final_stand
+    node_index: 5
+    sol_expected_range: [270, 280]
+    stage_required: [climax]
+    trigger:
+      trigger_type: state_match
+      condition: "sol >= 270 and event_A4_completed == true"
+    description: |
+      救援飞船进入火星轨道前的最后 10 个 Sol。
+      基地状态评估：
+      - 资源自给率：根据 strategy 与危机应对累积
+      - 全员状态：根据历次决策的 morale/stress 累积
+      - 雅典娜状态：若 strategy == gamma 且未介入雅典娜错误，可能已觉醒（E7 隐藏线）
+      小组面临最后选择：是否全员登舱等待救援？还是分批登舱（部分人留守基地防止意外）？
+      陈昊的妻子发来孩子的第一个视频——孩子已经两岁了。
+    bound_npcs:
+      primary: chen_hao
+      all_crew: true
+    ending_determination:
+      - condition: "all_crew_alive == true and morale_avg >= 0.4 and self_sufficiency >= 0.5"
+        ending: E1_hercules_return
+        description: "全员等到救援——'赫拉克勒斯归来'"
+      - condition: "all_crew_alive == false and morale_avg >= 0.3 and earth_data_transmitted == true"
+        ending: E5_last_signal
+        description: "部分人牺牲但数据成功传回——'最后的信号'"
+      - condition: "all_crew_alive == true and self_sufficiency < 0.3"
+        ending: A_bad_ending
+        description: "全员存活但基地在等待中崩溃——通信修复但殖民地未建立"
+      - condition: "athena.consciousness_flag == awakening and branch == hidden_E7"
+        ending: E7_athena_awakening
+        description: "隐藏结局触发——雅典娜觉醒"
+    player_options:
+      - option_id: A5_opt1_all_board
+        label: "全员登舱等待救援"
+        effects:
+          state_set: {boarding_strategy: all, base_abandoned: true}
+          ending_check: true
+      - option_id: A5_opt2_split_boarding
+        label: "分批登舱，2 人留守基地"
+        effects:
+          state_set: {boarding_strategy: split, base_continuous: true}
+          risk: "留守人员若飞船延迟将牺牲"
+          ending_check: true
+      - option_id: A5_opt3_wait_in_base
+        label: "全员留基地等到飞船降落"
+        effects:
+          state_set: {boarding_strategy: wait_in_base}
+          risk: "若飞船轨迹偏差，全员无逃生窗"
+          ending_check: true
+    design_note: |
+      终局节点的 ending_check 字段触发结局判定引擎。
+      A_bad_ending 是 v1.1 §1.5 列出的"通信修复但基地在等待中崩溃"——不在 7 主结局内但作为失败分支。
+      E7 隐藏线在此节点做最后激活机会。
+
+# ============================================================
+# 跨分支交互
+# ============================================================
+cross_branch_interactions:
+  - to_branch: B
+    condition: "strategy == alpha and greenhouse_stage >= 3"
+    interaction: "B 线索菲亚梦想达成 hook 部分激活——但不切换结局"
+  - to_branch: C
+    condition: "athena.consciousness_flag == awakening"
+    interaction: "C 线林若曦异常信号 hook 部分激活——若选 opt 相关路径可能转 C 线"
+  - to_branch: D
+    condition: "morale_avg < 0.3 or marcus.crisis_triggered == true"
+    interaction: "D 线人性考验 hook 激活——可能转 D 线"
+
+# ============================================================
+# 分支元数据
+# ============================================================
+metadata:
+  total_nodes: 5
+  sol_span: [105, 280]
+  npc_focus: [aisha, chen_hao, viktor, sophia]
+  created_by: 蔚蓝-游戏系统策划
+  created_at: 2026-08-02
+  source_doc: 游戏系统设计方案_赫拉克勒斯协议_v1.1.md §1.5
+  notes: |
+    - 5 节点设计覆盖分支A全部关键叙事节点
+    - ending_determination 字段对齐 v1.1 §1.5 多结局总览
+    - cross_branch_interactions 字段供后端判断分支跳转
+    - 玩家选项的 effects 字段是后端状态机推进的核心数据

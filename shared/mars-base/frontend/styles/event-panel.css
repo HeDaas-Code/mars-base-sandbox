@@ -1,0 +1,952 @@
+/* ============================================
+   火星信号 · Mars Signal
+   事件呈现 UI · CSS 样式
+   设计：幻影-视觉技术专家
+   日期：2026-08-03
+   规范来源：视觉与界面概念设计方案 v2.0
+   依赖：variables.css / animations.css
+   ============================================ */
+
+/* === 1. 事件容器（嵌入终端流，非浮层） === */
+
+.event-container {
+  margin: 8px 0;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  position: relative;
+  overflow: hidden;
+  animation: event-fade-in 0.4s ease-out;
+}
+
+@keyframes event-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 事件类型左边框色条 */
+.event-container::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+.event-container.type-mainline::before { background-color: var(--color-text-primary); }
+.event-container.type-crisis::before    { background-color: var(--color-warning); }
+.event-container.type-discovery::before { background-color: var(--color-signal); }
+.event-container.type-ending::before    { background-color: var(--ai-athena); }
+
+
+/* === 2. 事件头部 === */
+
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background-color: rgba(255, 179, 71, 0.06);
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-status);
+}
+
+.event-header-tag {
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+}
+
+.event-header-tag.type-mainline { color: var(--color-text-primary); border-color: var(--color-text-primary); }
+.event-header-tag.type-crisis    { color: var(--color-warning); border-color: var(--color-warning); }
+.event-header-tag.type-discovery { color: var(--color-signal); border-color: var(--color-signal); }
+.event-header-tag.type-ending    { color: var(--ai-athena); border-color: var(--ai-athena); }
+
+.event-header-sol {
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+}
+
+.event-header-sol .value {
+  color: var(--color-text-highlight);
+  font-weight: bold;
+}
+
+.event-header-node {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  margin-left: auto;
+}
+
+.event-header-branch {
+  color: var(--color-text-primary);
+  font-weight: bold;
+  font-size: 11px;
+}
+
+
+/* === 3. 事件描述区 === */
+
+.event-description {
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 事件描述中的 NPC 名引用高亮 */
+.event-description .npc-ref {
+  font-weight: bold;
+  opacity: 0.9;
+}
+
+/* 事件描述中的关键信息高亮 */
+.event-description .key-info {
+  color: var(--color-text-highlight);
+  font-weight: bold;
+}
+
+/* 事件描述中的风险提示 */
+.event-description .risk-text {
+  color: var(--color-warning);
+  font-style: italic;
+}
+
+
+/* === 4. 绑定 NPC 标记条 === */
+
+.event-bound-npcs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 10px;
+  border-top: 1px solid var(--color-border);
+  background-color: rgba(0, 0, 0, 0.2);
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+
+.event-bound-npc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+}
+
+.event-bound-npc-tag .symbol {
+  font-size: 12px;
+}
+
+.event-bound-npc-tag.primary {
+  border-color: currentColor;
+  font-weight: bold;
+}
+
+.event-bound-npc-tag .role {
+  opacity: 0.6;
+  font-size: 9px;
+}
+
+
+/* === 5. 玩家选项列表 === */
+
+.event-options {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-options-label {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.event-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  position: relative;
+}
+
+.event-option:hover,
+.event-option:focus {
+  border-color: var(--color-text-primary);
+  background-color: rgba(255, 179, 71, 0.08);
+  outline: none;
+}
+
+.event-option.selected {
+  border-color: var(--color-text-highlight);
+  background-color: rgba(255, 214, 153, 0.12);
+}
+
+.event-option.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+/* 选项序号 */
+.event-option-index {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--color-text-secondary);
+  margin-top: 1px;
+}
+
+.event-option:hover .event-option-index,
+.event-option:focus .event-option-index {
+  border-color: var(--color-text-primary);
+  color: var(--color-text-primary);
+}
+
+.event-option.selected .event-option-index {
+  border-color: var(--color-text-highlight);
+  color: var(--color-text-highlight);
+  background-color: rgba(255, 214, 153, 0.15);
+}
+
+/* 选项内容 */
+.event-option-content {
+  flex: 1;
+}
+
+.event-option-label {
+  color: var(--color-text-primary);
+}
+
+/* 选项风险提示 */
+.event-option-risk {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-warning);
+  font-style: italic;
+}
+
+/* 选项推荐标记（高信任路径） */
+.event-option.recommended::after {
+  content: '★';
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 12px;
+  color: var(--color-text-highlight);
+}
+
+/* 选项分支锁定提示 */
+.event-option-branch-lock {
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--color-signal);
+  opacity: 0.7;
+}
+
+
+/* === 6. 事件结果反馈面板 === */
+
+.event-result {
+  margin-top: 6px;
+  border: 1px solid var(--color-border);
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.event-result-header {
+  padding: 4px 10px;
+  background-color: rgba(255, 179, 71, 0.06);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* v1.2: effects_summary 摘要文本 */
+.event-result-summary {
+  padding: 8px 12px;
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-body);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* v1.2: leads_to 跳转提示 */
+.effect-leads-to {
+  color: var(--color-signal);
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* v1.2: narrative_segments 中 NPC 对话行 */
+.event-desc-npc-line {
+  margin: 4px 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--color-border);
+}
+
+/* v1.2: chapter_id 标签 */
+.event-header-chapter {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* v1.2: followup 渲染容器 */
+.followup-target {
+  margin-top: 4px;
+}
+
+/* effects 变化列表 */
+.event-result-effects {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-status);
+}
+
+.effect-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.effect-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.effect-label {
+  color: var(--color-text-secondary);
+  min-width: 100px;
+}
+
+.effect-value {
+  font-weight: bold;
+}
+
+.effect-value.positive { color: var(--color-safe); }
+.effect-value.negative { color: var(--color-warning); }
+.effect-value.neutral  { color: var(--color-text-primary); }
+
+/* 状态设置类效果 */
+.effect-state-set {
+  color: var(--color-signal);
+  font-size: 11px;
+}
+
+/* 风险提示效果 */
+.effect-risk {
+  color: var(--color-warning);
+  font-style: italic;
+  font-size: 11px;
+}
+
+/* 分支进度 */
+.effect-branch-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.effect-branch-progress .branch-label {
+  color: var(--color-text-primary);
+  font-weight: bold;
+}
+
+.effect-branch-progress .progress-dots {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.effect-branch-progress .dot {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+}
+
+.effect-branch-progress .dot.filled {
+  background-color: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+}
+
+
+/* === 7. 任务下达面板 === */
+
+.task-briefing {
+  margin: 8px 0;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  overflow: hidden;
+}
+
+.task-briefing-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background-color: rgba(102, 204, 255, 0.06);
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-status);
+}
+
+.task-briefing-icon {
+  font-size: 14px;
+  color: var(--color-signal);
+}
+
+.task-briefing-title {
+  color: var(--color-text-primary);
+  font-weight: bold;
+}
+
+.task-briefing-from {
+  margin-left: auto;
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+  font-size: 10px;
+}
+
+.task-briefing-body {
+  padding: 8px 12px;
+}
+
+.task-briefing-desc {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+}
+
+.task-briefing-objectives {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.task-objective {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--font-size-status);
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+}
+
+.task-objective .obj-marker {
+  color: var(--color-signal);
+  flex-shrink: 0;
+}
+
+.task-objective.completed {
+  color: var(--color-safe);
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.task-objective.completed .obj-marker::before {
+  content: '[完成] ';
+}
+
+.task-briefing-reward {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+}
+
+.task-briefing-reward .reward-label {
+  color: var(--color-text-highlight);
+  font-weight: bold;
+}
+
+
+/* === 8. Sol 推进通知 === */
+
+.sol-advance-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-status);
+  margin: 4px 0;
+  animation: sol-pulse 0.6s ease-out;
+}
+
+@keyframes sol-pulse {
+  0%   { background-color: rgba(255, 179, 71, 0.15); }
+  100% { background-color: var(--color-bg-secondary); }
+}
+
+.sol-advance-notice .sol-label {
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 10px;
+}
+
+.sol-advance-notice .sol-value {
+  color: var(--color-text-highlight);
+  font-weight: bold;
+  font-size: var(--font-size-title);
+  font-family: var(--font-display);
+}
+
+.sol-advance-notice .sol-delta {
+  color: var(--color-text-primary);
+  opacity: 0.7;
+}
+
+.sol-advance-notice .sol-chapter {
+  margin-left: auto;
+  color: var(--color-signal);
+  font-size: 11px;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border);
+}
+
+
+/* === 9. 信号遮罩适配（事件描述也走遮罩） === */
+
+.event-container.signal-l2 .event-description { opacity: 0.85; }
+.event-container.signal-l3 .event-description { opacity: 0.6; }
+.event-container.signal-l4 .event-description { opacity: 0.35; }
+
+/* L4 时选项也受影响但保持可交互 */
+.event-container.signal-l3 .event-option { opacity: 0.85; }
+.event-container.signal-l4 .event-option { opacity: 0.7; }
+
+/* L4 时禁用选项抖动动画（对齐叠加优先级规范） */
+.event-container.signal-l4 .event-option:hover {
+  animation: none;
+}
+
+
+/* === 10. 结局判定面板（v1.3 §13.3 + §14.3）=== */
+
+/* 10a. 通用 ending-panel 样式 */
+.ending-panel {
+  margin: 8px 0;
+  border: 2px solid var(--ai-athena);
+  background-color: var(--color-bg-secondary);
+  overflow: hidden;
+  animation: ending-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes ending-glow {
+  from { box-shadow: 0 0 4px rgba(179, 153, 230, 0.3); }
+  to   { box-shadow: 0 0 12px rgba(179, 153, 230, 0.6); }
+}
+
+.ending-header {
+  padding: 8px 12px;
+  background-color: rgba(179, 153, 230, 0.1);
+  border-bottom: 1px solid var(--ai-athena);
+  text-align: center;
+}
+
+.ending-id {
+  font-family: var(--font-display);
+  font-size: var(--font-size-system);
+  color: var(--ai-athena);
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.ending-title {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-title);
+  color: var(--color-text-highlight);
+  margin-top: 4px;
+}
+
+.ending-desc {
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+/* 10b. v1.3 §13.3 可能结局列表面板（展示性，终局节点） */
+.ending-list-panel {
+  border-style: dashed;
+  animation: none;
+  box-shadow: none;
+}
+
+.ending-list-panel .ending-header {
+  background-color: rgba(179, 153, 230, 0.05);
+  border-bottom-style: dashed;
+}
+
+.ending-list-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px dashed rgba(179, 153, 230, 0.2);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-status);
+}
+
+.ending-list-item:last-child {
+  border-bottom: none;
+}
+
+.ending-list-item .ending-id {
+  font-size: 10px;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+
+.ending-list-item .ending-desc-text {
+  flex: 1 1 60%;
+  color: var(--color-text-primary);
+}
+
+.ending-list-item .ending-condition {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+/* 10c. v1.3 §14.3 结局命中面板（紫色发光边框 + 居中） */
+.ending-hit-panel {
+  margin: 16px auto;
+  max-width: 90%;
+  border: 3px solid var(--ai-athena);
+  animation: ending-hit-flash 0.6s ease-out, ending-glow 2s ease-in-out 0.6s infinite alternate;
+}
+
+@keyframes ending-hit-flash {
+  0%   { transform: scale(0.9); opacity: 0; box-shadow: 0 0 0 rgba(179, 153, 230, 0); }
+  50%  { transform: scale(1.02); opacity: 1; box-shadow: 0 0 20px rgba(179, 153, 230, 0.8); }
+  100% { transform: scale(1); opacity: 1; box-shadow: 0 0 12px rgba(179, 153, 230, 0.6); }
+}
+
+.ending-hit-panel .ending-title {
+  font-size: var(--font-size-subtitle, 16px);
+  color: var(--ai-athena);
+}
+
+.ending-hit-footer {
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  letter-spacing: 2px;
+  border-top: 1px solid rgba(179, 153, 230, 0.3);
+}
+
+
+/* === 10d. v1.3 §15 章节切换过渡动画 === */
+
+.chapter-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-bg-primary);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.chapter-transition-overlay.visible {
+  opacity: 1;
+}
+
+.chapter-transition-overlay.fading {
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.chapter-transition-content {
+  text-align: center;
+  animation: chapter-content-rise 1s ease-out;
+}
+
+@keyframes chapter-content-rise {
+  0%   { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.chapter-transition-label {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.chapter-transition-name {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  color: var(--color-text-highlight);
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.chapter-transition-sol {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-status);
+  color: var(--color-text-secondary);
+  letter-spacing: 2px;
+}
+
+
+/* === 11. 跟进决策面板（二级选项 · Case 1 B 方案） ===
+   视觉区别于一级选项：
+   - 缩进 16px（标志"在主选项之下的二次决断"）
+   - 紫色色条（--followup-source-color，默认 --ai-athena，AI/NPC 建议场景）
+   - 圆形字母序号 a/b/c（区别一级方形数字 1/2/3）
+   - 整体字号略小（13px / 11px）
+   ============================================ */
+
+.followup-panel {
+  --followup-source-color: var(--ai-athena);
+  margin: 6px 0 6px 16px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--followup-source-color);
+  background-color: var(--color-bg-secondary);
+  position: relative;
+  overflow: hidden;
+  animation: followup-fade-in 0.35s ease-out;
+}
+
+@keyframes followup-fade-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* 头部：FOLLOWUP 标签 + 源 NPC 名 */
+.followup-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background-color: rgba(179, 153, 230, 0.06);
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.followup-tag {
+  color: var(--followup-source-color);
+  border: 1px solid var(--followup-source-color);
+  background-color: var(--color-bg-primary);
+  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.followup-source {
+  color: var(--followup-source-color);
+  opacity: 0.85;
+  font-size: 10px;
+}
+
+/* 跟进提示文本 */
+.followup-prompt {
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: var(--line-height-body);
+  color: var(--color-text-primary);
+  border-left: 2px solid transparent;
+  position: relative;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 提示文本前置 ▸ 符号 */
+.followup-prompt::before {
+  content: '▸ ';
+  color: var(--followup-source-color);
+  font-weight: bold;
+}
+
+/* 跟进 NPC 名引用高亮（继承事件描述规则） */
+.followup-prompt .npc-ref {
+  font-weight: bold;
+  opacity: 0.9;
+}
+
+/* 二级选项列表 */
+.followup-options {
+  padding: 6px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.followup-options-label {
+  font-size: 9px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+/* 单个二级选项（视觉弱化于一级） */
+.followup-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  position: relative;
+}
+
+.followup-option:hover,
+.followup-option:focus {
+  border-color: var(--followup-source-color);
+  background-color: rgba(179, 153, 230, 0.08);
+  outline: none;
+}
+
+.followup-option.selected {
+  border-color: var(--followup-source-color);
+  background-color: rgba(179, 153, 230, 0.15);
+}
+
+.followup-option.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+/* 圆形字母序号 a/b/c（区别一级方形数字 1/2/3） */
+.followup-option-index {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--color-text-secondary);
+  margin-top: 1px;
+  font-family: var(--font-mono);
+}
+
+.followup-option:hover .followup-option-index,
+.followup-option:focus .followup-option-index {
+  border-color: var(--followup-source-color);
+  color: var(--followup-source-color);
+}
+
+.followup-option.selected .followup-option-index {
+  border-color: var(--followup-source-color);
+  color: var(--followup-source-color);
+  background-color: rgba(179, 153, 230, 0.18);
+}
+
+/* 选项内容 */
+.followup-option-content {
+  flex: 1;
+}
+
+.followup-option-label {
+  color: var(--color-text-primary);
+}
+
+.followup-option-risk {
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--color-warning);
+  font-style: italic;
+}
+
+.followup-option-branch-lock {
+  margin-top: 3px;
+  font-size: 9px;
+  color: var(--followup-source-color);
+  opacity: 0.75;
+}
+
+/* 推荐标记（紫色 ★ 区别一级琥珀色 ★） */
+.followup-option.recommended::after {
+  content: '★';
+  position: absolute;
+  top: 3px;
+  right: 6px;
+  font-size: 11px;
+  color: var(--followup-source-color);
+}
+
+/* 信号遮罩适配（与主事件同规则） */
+.followup-panel.signal-l2 .followup-prompt { opacity: 0.85; }
+.followup-panel.signal-l3 .followup-prompt { opacity: 0.6; }
+.followup-panel.signal-l4 .followup-prompt { opacity: 0.35; }
+.followup-panel.signal-l3 .followup-option { opacity: 0.85; }
+.followup-panel.signal-l4 .followup-option { opacity: 0.7; }
+.followup-panel.signal-l4 .followup-option:hover {
+  animation: none;
+}
+

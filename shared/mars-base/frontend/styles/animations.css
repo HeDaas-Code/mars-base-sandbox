@@ -1,0 +1,181 @@
+/* ============================================
+   动画样式
+   ============================================ */
+
+/* 光标闪烁 */
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.2; }
+}
+
+/* 信号抖动 */
+@keyframes signal-jitter {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
+  100% { transform: translateX(0); }
+}
+
+/* 危险脉冲 */
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 未知状态闪烁 */
+@keyframes blink-unknown {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* 紧急闪烁 */
+@keyframes blink-fast {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.2; }
+}
+
+/* 进度条光泽流动 */
+@keyframes progress-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* === 启动动画 === */
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  font-family: var(--font-display);
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.boot-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 600px;
+  width: 90%;
+}
+
+.boot-title {
+  font-size: 48px;
+  letter-spacing: 8px;
+  color: var(--color-text-primary);
+  text-shadow:
+    0 0 10px var(--color-text-primary),
+    0 0 20px rgba(255, 179, 71, 0.5);
+  animation: title-flicker 3s infinite;
+}
+
+.boot-subtitle {
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: var(--color-text-secondary);
+}
+
+.boot-status {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-top: 24px;
+  min-height: 20px;
+}
+
+.boot-progress {
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-border);
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.boot-progress-fill {
+  height: 100%;
+  width: 0%;
+  background-color: var(--color-text-primary);
+  transition: width 0.3s ease-out;
+}
+
+.boot-freq {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.boot-prompt {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  margin-top: 24px;
+  animation: blink-unknown 1.5s infinite;
+  cursor: pointer;
+}
+
+@keyframes title-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.6; }
+  94% { opacity: 1; }
+  96% { opacity: 0.8; }
+  97% { opacity: 1; }
+}
+
+/* === 打字机效果（用于逐字渲染） === */
+@keyframes typewriter-char {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === 淡入 === */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* === 屏幕轻微震动（重大事件触发） === */
+@keyframes screen-shake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-1px, 1px); }
+  20% { transform: translate(1px, -1px); }
+  30% { transform: translate(-1px, -1px); }
+  40% { transform: translate(1px, 1px); }
+  50% { transform: translate(-1px, 0); }
+  60% { transform: translate(1px, 0); }
+  70% { transform: translate(0, -1px); }
+  80% { transform: translate(0, 1px); }
+  90% { transform: translate(-1px, 1px); }
+}
+
+.app-container.shake {
+  animation: screen-shake 0.5s;
+}
+
+/* === 信号扫描线（搜索信号时） === */
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.scan-line {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-signal) 50%,
+    transparent 100%
+  );
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 999;
+  animation: scan-line 2s linear infinite;
+}

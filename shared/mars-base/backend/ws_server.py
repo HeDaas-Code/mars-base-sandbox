@@ -1,0 +1,528 @@
+#!/usr/bin/env python
+"""
+WebSocket 联调服务器 v1.0
+================================
+桥接前端 WebSocket 客户端与后端 Agent 链路。
+
+协议：云逸《WebSocket 接口定义 v1.1》
+- 监听 ws://localhost:8000/ws
+- 处理 C→S 消息：hello / player_input / command / ping / resume / ack
+- 返回 S→C 消息：session_init / agent_message / command_response / pong / error
+
+依赖：
+  pip install websockets
+  后端模块：ws_adapter_v2.process_input()
+
+启动：
+  cd shared/mars-base/backend
+  python3 ws_server.py [--port 8000] [--host 0.0.0.0]
+"""
+
+import asyncio
+import json
+import logging
+import time
+import uuid
+import argparse
+import os
+import sys
+from typing import Dict, Set, Optional
+
+# 确保能 import 后端模块
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    import websockets
+    from websockets.server import serve
+except ImportError:
+    print("[FATAL] websockets 库未安装。请运行: pip install websockets")
+    sys.exit(1)
+
+# 从 ws_adapter_v2 导入（root 权限问题导致 ws_adapter.py 无法覆盖，v2 为正式版本）
+from ws_adapter_v2 import (
+    process_input,
+    NPC_REGISTRY,
+    get_game_state,
+    AGENT_TO_NPC_ID,
+)
+from agent.game_state import (
+    create_initial_game_state,
+    build_emotion_hint,
+    AI_SENDERS,
+)
+
+# ============================================================
+# 日志配置
+# ============================================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger("ws_server")
+
+# ============================================================
+# 会话管理
+# ============================================================
+
+class ClientSession:
+    """单个 WebSocket 客户端的会话状态"""
+
+    def __init__(self, websocket):
+        self.ws = websocket
+        self.session_id: str = f"sess-{uuid.uuid4().hex[:12]}"
+        self.player_id: Optional[str] = None
+        self.player_name: Optional[str] = None
+        self.last_msg_id: Optional[str] = None
+        self.connected_at: float = time.time()
+        # 默认响应模式
+        self.response_mode: str = "deliberate"
+        # 当前对话目标（talk <name> 切换后的默认目标）
+        self.current_target: str = "chen_hao"
+
+
+# ============================================================
+# 消息构造工具
+# ============================================================
+
+def _gen_msg_id() -> str:
+    return f"msg-{uuid.uuid4().hex[:12]}"
+
+
+def _now_ts() -> int:
+    return int(time.time())
+
+
+def build_session_init(session: ClientSession) -> Dict:
+    """构造 session_init 消息（v1.1 §3.2）
+
+    前端收到后会初始化世界状态、CrewPanel、MemoryLoadIndicator 等。
+    """
+    gs = get_game_state()
+
+    # 构造 agents 列表（前端 CrewPanel 需要）
+    agents_list = []
+    for npc_id, npc in NPC_REGISTRY.items():
+        # 从 GameState 获取 stress/morale
+        gs_npc_id = AGENT_TO_NPC_ID.get(npc_id, npc_id)
+        npc_state = gs.npc_states.get(gs_npc_id)
+        stress = npc_state.stress if npc_state else 0.0
+        morale = npc_state.morale if npc_state else 1.0
+        agents_list.append({
+            "agent_id": npc["agent_id"],
+            "label": npc["label"],
+            "name": npc["name"],
+            "location": npc["location"],
+            "health": 1.0,
+            "stress": round(stress, 2),
+            "morale": round(morale, 2),
+            "current_task": "待命",
+        })
+
+    return {
+        "msg_id": _gen_msg_id(),
+        "type": "session_init",
+        "ts_tick": _now_ts(),
+        "payload": {
+            "session_id": session.session_id,
+            "resume_mode": "cold",  # Phase 1 全部走 cold
+            "player_state": {
+                "player_id": session.player_id or "earth_observer_01",
+                "player_name": session.player_name or "观察者",
+                "established_at": "2087-04-15T08:00:00Z",
+                "signal_quality_pct": gs.signal_quality,
+            },
+            "world_snapshot": {
+                "sol": gs.sol,
+                "mars_time": "08:00",
+                "base": {
+                    "name": "赫拉克勒斯-7号基地",
+                    "integrity": 0.78,
+                    "resources": {
+                        "oxygen": {"current": 78, "max": 100, "rate": -0.3},
+                        "power": {"current": 85, "max": 100, "rate": 0.5},
+                        "water": {"current": 65, "max": 100, "rate": -0.1},
+                        "food": {"current": 90, "max": 100, "rate": -0.5},
+                    },
+                    "materials": {
+                        "iron": 24,
+                        "silicon": 12,
+                        "carbon": 5,
+                    },
+                },
+                "agents": agents_list,
+            },
+            "signal_quality_pct": gs.signal_quality,
+        },
+    }
+
+
+def build_error_message(code: str, message: str) -> Dict:
+    """构造 error 消息"""
+    return {
+        "msg_id": _gen_msg_id(),
+        "type": "error",
+        "ts_tick": _now_ts(),
+        "payload": {
+            "code": code,
+            "message": message,
+        },
+    }
+
+
+def build_pong() -> Dict:
+    """构造 pong 消息"""
+    return {
+        "msg_id": _gen_msg_id(),
+        "type": "pong",
+        "ts_tick": _now_ts(),
+        "payload": {},
+    }
+
+
+def build_ack(acked_msg_id: str) -> Dict:
+    """构造 ack 消息"""
+    return {
+        "msg_id": _gen_msg_id(),
+        "type": "ack",
+        "ts_tick": _now_ts(),
+        "payload": {
+            "acked_msg_id": acked_msg_id,
+        },
+    }
+
+
+# ============================================================
+# 消息处理
+# ============================================================
+
+async def handle_hello(session: ClientSession, payload: Dict) -> Optional[Dict]:
+    """处理 hello 消息 → 返回 session_init"""
+    # 提取 token / client_version（Phase 1 不校验）
+    token = payload.get("token")
+    client_version = payload.get("client_version", "0.1.0")
+    last_session_id = payload.get("last_session_id")
+
+    # 如果有 token，解析 player_id（Phase 1 占位）
+    if token:
+        session.player_id = "earth_observer_01"
+        session.player_name = "观察者"
+
+    logger.info(
+        "hello 收到: client_version=%s, last_session=%s, token=%s",
+        client_version,
+        last_session_id,
+        "有" if token else "无",
+    )
+
+    # 返回 session_init
+    return build_session_init(session)
+
+
+async def handle_player_input(session: ClientSession, payload: Dict) -> Optional[Dict]:
+    """处理 player_input 消息 → 调用 Agent 链路 → 返回 agent_message
+
+    payload: {text, target_agent_id?}
+    """
+    text = payload.get("text", "").strip()
+    target_agent_id = payload.get("target_agent_id")
+
+    if not text:
+        return build_error_message("E_EMPTY_INPUT", "输入文本不能为空")
+
+    # 如果指定了 target_agent_id，合成 "talk <name> <text>" 格式
+    if target_agent_id and target_agent_id in NPC_REGISTRY:
+        raw_input = f"talk {target_agent_id} {text}"
+        agent_id = target_agent_id
+    else:
+        # 没指定目标 → 用 session.current_target
+        raw_input = f"talk {session.current_target} {text}"
+        agent_id = session.current_target
+
+    logger.info(
+        "player_input: text=%r, target=%s, mode=%s",
+        text[:50],
+        agent_id,
+        session.response_mode,
+    )
+
+    # 调用后端处理（同步函数，放到线程池避免阻塞事件循环）
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            process_input,
+            raw_input,
+            agent_id,
+            session.response_mode,
+        )
+    except Exception as e:
+        logger.exception("process_input 异常")
+        return build_error_message("E_AGENT_FAILURE", f"Agent 处理失败: {e}")
+
+    logger.info(
+        "response: type=%s, sender=%s, latency=%sms",
+        result.get("type"),
+        result.get("payload", {}).get("sender_id"),
+        result.get("payload", {}).get("latency_ms"),
+    )
+
+    return result
+
+
+async def handle_command(session: ClientSession, payload: Dict) -> Optional[Dict]:
+    """处理 command 消息 → 路由到命令处理或 talk
+
+    payload: {raw, args[]}
+    """
+    raw = payload.get("raw", "").strip().lower()
+    args = payload.get("args", [])
+
+    logger.info("command: raw=%r, args=%r", raw, args)
+
+    # talk 命令特殊处理
+    if raw == "talk":
+        if not args:
+            return {
+                "msg_id": _gen_msg_id(),
+                "type": "command_response",
+                "ts_tick": _now_ts(),
+                "payload": {
+                    "output_segments": [
+                        {"text": "用法: talk <name> [message]\n", "protected": True, "tag": "command_response"}
+                    ],
+                    "data": None,
+                },
+            }
+        target = args[0].lower()
+        if target not in NPC_REGISTRY:
+            return {
+                "msg_id": _gen_msg_id(),
+                "type": "command_response",
+                "ts_tick": _now_ts(),
+                "payload": {
+                    "output_segments": [
+                        {"text": f"未知人员: {target}。输入 ls 查看可用人员。\n", "protected": True, "tag": "command_response"}
+                    ],
+                    "data": None,
+                },
+            }
+        # 切换当前对话目标
+        session.current_target = target
+
+        # 如果有后续文本，走 Agent 链路
+        if len(args) > 1:
+            player_text = " ".join(args[1:])
+            raw_input = f"talk {target} {player_text}"
+            try:
+                result = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    process_input,
+                    raw_input,
+                    target,
+                    session.response_mode,
+                )
+                return result
+            except Exception as e:
+                logger.exception("talk 命令处理异常")
+                return build_error_message("E_AGENT_FAILURE", f"Agent 处理失败: {e}")
+        else:
+            # 仅切换目标，返回确认
+            npc = NPC_REGISTRY[target]
+            return {
+                "msg_id": _gen_msg_id(),
+                "type": "command_response",
+                "ts_tick": _now_ts(),
+                "payload": {
+                    "output_segments": [
+                        {"text": f"已切换到 {npc['name']} [{npc['label']}]。说点什么？\n", "protected": True, "tag": "command_response"}
+                    ],
+                    "data": {"target_agent": target},
+                },
+            }
+
+    # 其他系统命令 → 交给 process_input
+    raw_input = raw + (" " + " ".join(args) if args else "")
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            process_input,
+            raw_input,
+            session.current_target,
+            session.response_mode,
+        )
+        return result
+    except Exception as e:
+        logger.exception("command 处理异常")
+        return build_error_message("E_CMD_FAILURE", f"命令处理失败: {e}")
+
+
+async def handle_resume(session: ClientSession, payload: Dict) -> Optional[Dict]:
+    """处理 resume 消息 → Phase 1 简化：返回 session_init"""
+    session_id = payload.get("session_id")
+    last_msg_id = payload.get("last_msg_id")
+    logger.info("resume: session=%s, last_msg=%s", session_id, last_msg_id)
+    # Phase 1 不做真正的 resume，返回新的 session_init
+    return build_session_init(session)
+
+
+# ============================================================
+# 消息分发
+# ============================================================
+
+async def dispatch_message(session: ClientSession, msg: Dict) -> Optional[Dict]:
+    """根据消息 type 分发到对应处理器
+
+    Returns:
+        要发回客户端的消息（dict），或 None 表示不回复
+    """
+    msg_type = msg.get("type")
+    payload = msg.get("payload", {})
+    msg_id = msg.get("msg_id")
+
+    if msg_type == "hello":
+        return await handle_hello(session, payload)
+
+    elif msg_type == "player_input":
+        return await handle_player_input(session, payload)
+
+    elif msg_type == "command":
+        return await handle_command(session, payload)
+
+    elif msg_type == "ping":
+        return build_pong()
+
+    elif msg_type == "resume":
+        return await handle_resume(session, payload)
+
+    elif msg_type == "ack":
+        # 客户端 ack，不需要回复
+        logger.debug("收到客户端 ack: %s", payload.get("acked_msg_id"))
+        return None
+
+    else:
+        logger.warning("未知消息类型: %s", msg_type)
+        return build_error_message("E_UNKNOWN_TYPE", f"未知消息类型: {msg_type}")
+
+
+# ============================================================
+# WebSocket 连接处理
+# ============================================================
+
+# 活跃连接集合
+_connected_clients: Set[ClientSession] = set()
+
+
+async def client_handler(websocket):
+    """单个客户端连接的处理器
+
+    生命周期：
+    1. 创建 ClientSession
+    2. 循环接收消息 → 分发 → 发送响应
+    3. 异常 / 断开 → 清理
+    """
+    session = ClientSession(websocket)
+    _connected_clients.add(session)
+    peer = websocket.remote_address if hasattr(websocket, "remote_address") else "unknown"
+    logger.info("客户端连接: %s (session=%s)", peer, session.session_id)
+
+    try:
+        async for raw_data in websocket:
+            # 解析消息
+            try:
+                msg = json.loads(raw_data)
+            except json.JSONDecodeError:
+                logger.warning("JSON 解析失败: %s", raw_data[:200])
+                await websocket.send(json.dumps(build_error_message(
+                    "E_JSON_PARSE", "消息 JSON 解析失败"
+                )))
+                continue
+
+            msg_type = msg.get("type", "?")
+            msg_id = msg.get("msg_id", "?")
+
+            # 分发处理
+            try:
+                response = await dispatch_message(session, msg)
+            except Exception as e:
+                logger.exception("消息处理异常 (type=%s)", msg_type)
+                response = build_error_message("E_INTERNAL", f"内部错误: {e}")
+
+            # 发送响应
+            if response is not None:
+                # 如果请求有 msg_id，在响应里带上它（方便客户端关联）
+                if msg_id and "ack_for" not in response.get("payload", {}):
+                    response["payload"]["_ack_for"] = msg_id
+
+                response_json = json.dumps(response, ensure_ascii=False)
+                try:
+                    await websocket.send(response_json)
+                    # 更新 session 的 last_msg_id
+                    session.last_msg_id = response.get("msg_id")
+                except websockets.exceptions.ConnectionClosed:
+                    logger.warning("发送响应时连接已关闭")
+                    break
+
+            # 处理后日志
+            resp_type = response.get("type") if response else "无响应"
+            logger.debug("处理完成: req=%s → resp=%s", msg_type, resp_type)
+
+    except websockets.exceptions.ConnectionClosed:
+        logger.info("客户端断开: session=%s", session.session_id)
+    except Exception as e:
+        logger.exception("连接异常: %s", e)
+    finally:
+        _connected_clients.discard(session)
+        elapsed = time.time() - session.connected_at
+        logger.info("连接结束: session=%s, 存活 %.1fs", session.session_id, elapsed)
+
+
+# ============================================================
+# 服务器启动
+# ============================================================
+
+async def start_server(host: str = "0.0.0.0", port: int = 8000):
+    """启动 WebSocket 服务器"""
+
+    # 预热 GameState（避免首次请求延迟过高）
+    logger.info("预热 GameState...")
+    gs = get_game_state()
+    logger.info(
+        "GameState 就绪: %d NPCs, signal=%d, athena=%s",
+        len(gs.npc_states),
+        gs.signal_quality,
+        gs.athena_status,
+    )
+
+    # 预热 Agent（加载种子记忆）
+    logger.info("预热 Agent（加载种子记忆）...")
+    from ws_adapter_v2 import get_agent
+    get_agent("chen_hao")
+    logger.info("Agent 就绪")
+
+    logger.info("=" * 60)
+    logger.info("WebSocket 联调服务器启动")
+    logger.info("监听: ws://%s:%d/ws", host, port)
+    logger.info("前端连接: ws://localhost:%d/ws", port)
+    logger.info("按 Ctrl+C 停止")
+    logger.info("=" * 60)
+
+    # 启动 WebSocket 服务器
+    async with serve(client_handler, host, port, ping_interval=None):
+        await asyncio.Future()  # 永久阻塞
+
+
+def main():
+    parser = argparse.ArgumentParser(description="WebSocket 联调服务器")
+    parser.add_argument("--host", default="0.0.0.0", help="监听地址（默认 0.0.0.0）")
+    parser.add_argument("--port", type=int, default=8000, help="监听端口（默认 8000）")
+    args = parser.parse_args()
+
+    try:
+        asyncio.run(start_server(args.host, args.port))
+    except KeyboardInterrupt:
+        logger.info("服务器已停止")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,248 @@
+# ============================================================
+# 章节字典：阶段3 - 建设扩张期（Sol 26-45）
+# 对应 v1.1 §1.5 主线骨架·阶段3 / §2.3 节奏 / §4.4 进度曲线 / §5.4 中后期游戏
+# 作者：蔚蓝-游戏系统策划  日期：2026-08-02
+# ============================================================
+
+stage_id: build
+stage_name: 建设扩张期
+sol_range: [26, 45]
+real_sol_range: [131, 150]
+narrative_focus: "经营策略、生产链建设、分支路线明确、雅典娜觉醒伏笔、道德压力初现"
+self_sufficiency_target: [45, 80]   # 自给率 45% → 80%
+instruction_count_per_sol: "5-8"
+event_frequency: low                # 偶发事件，经营为主
+pacing_feel: "经营规划，科技树推进"
+critical_resources:
+  - 电子元件_单位               # 最关键瓶颈，生产链最长 2 Sol
+  - 维克托工时                  # 所有加工/建造需他参与
+  - 研究点                      # 科技树推进的硬通货
+
+# ------------------------------------------------------------
+# 常驻线索词
+# ------------------------------------------------------------
+permanent_keywords:
+  - keyword: "完整生产链"
+    category: production
+    priority: critical
+    description: "冰→水+氧 / 铁矿石→铁锭→零部件 / 硅→硅晶片→电子元件 的全链路建设"
+    bound_state:
+      - chain: ice_to_water_oxygen
+        status: partial
+      - chain: iron_to_parts
+        status: partial
+      - chain: silicon_to_electronics
+        status: not_started
+    narrative_function: "本阶段核心目标——向 80% 自给率推进"
+
+  - keyword: "科技树"
+    category: technology
+    priority: high
+    description: "三大分支 9 节点：基础生存 / 资源利用 / 高级制造，每节点 L1/L2 两级"
+    bound_state:
+      - techtree: 3_branches_9_nodes
+        research_points: 0
+    narrative_function: "玩家策略选择载体"
+
+  - keyword: "机器人助手"
+    category: facility
+    priority: medium
+    description: "可执行 NPC 简单任务的自动化设备；解锁后缓解维克托工时瓶颈"
+    bound_state:
+      - facility: robot_assistant
+        status: locked
+        unlock_req: [电子元件x8, 零部件x10, research_points:30]
+    narrative_function: "维克托工时瓶颈的解法"
+
+  - keyword: "3D打印机"
+    category: facility
+    priority: medium
+    description: "可制造高级/定制部件；解锁后打通稀有矿物到特殊科技路径"
+    bound_state:
+      - facility: printer_3d
+        status: locked
+        unlock_req: [电子元件x5, 硅晶片x20]
+    narrative_function: "高级装备的关键工艺"
+
+# ------------------------------------------------------------
+# 临时线索词
+# ------------------------------------------------------------
+temporary_keywords:
+  - keyword: "分支A_通信阵列主修复"
+    trigger:
+      trigger_id: tr_bld_001_branch_A_comm_repair
+      trigger_type: state_match
+      condition: "branch_choice_made == A or (comm_priority == high and parts >= 5 and electronic_components >= 1)"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "comm_array_main_status == repaired or sol >= 35"
+    description: "修复主通信阵列：电子元件x5 + 雷达天线组件x1 + 艾莎操作 → 解锁宽带通信"
+    bound_npc: aisha
+    skill_check:
+      skill: 通信
+      level: 5
+      success_rate_base: 0.80
+    impact:
+      - success:
+          comm_array_main_status: repaired
+          signal_quality_pct_delta: +30
+          achievement_id: ACH_earth_contact
+      - partial: 信号恢复但带宽受限，需后续调试
+      - failure: 元件损耗，需重新组织材料
+    branch: A_earth_rescue
+    design_note: "v1.1 §5.4 分支A 关键节点"
+
+  - keyword: "地球确认幸存_但救援需等26月"
+    trigger:
+      trigger_id: tr_bld_002_earth_confirms_alive
+      trigger_type: state_match
+      condition: "comm_array_main_status == repaired and sol >= 30"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "branch_A_extended_to_280 == true or stage == climax"
+    description: "地球确认幸存但救援飞船最早 Sol 280 到达——小组必须将生存时间延长至 280 Sol"
+    state_set: {earth_aware: true, rescue_eta_sol: 280, survival_countdown_extended: 200}
+    morale_delta: {all: +20}      # 首次士气大幅提升
+    new_target: "280 Sol 生存倒计时（原 60 Sol → 200 Sol 延伸目标）"
+    design_note: "v1.1 §1.5 分支A 核心叙事"
+
+  - keyword: "分支B_自给率60讨论"
+    trigger:
+      trigger_id: tr_bld_003_branch_B_self_sufficiency_discussion
+      trigger_type: state_match
+      condition: "self_sufficiency_pct >= 60 and sol >= 30"
+    ttl:
+      expire_type: on_event
+      expire_condition: "permanent_settlement_vote == held or stage == climax"
+    description: "小组讨论是否宣布永久定居——分支 B 永久定居线的关键节点"
+    bound_npc: chen_hao
+    flag_set: {branch_B_discussion: active}
+    player_options:
+      - 推进定居讨论
+      - 等待更多数据
+      - 反对永久定居
+      - 自由输入
+    branch: B_self_reliance
+    design_note: "v1.1 §5.4 分支B 关键节点"
+
+  - keyword: "分支C_异常信号源坐标"
+    trigger:
+      trigger_id: tr_bld_004_branch_C_signal_source_coords
+      trigger_type: state_match
+      condition: "atmosphere_anomaly_detected == true and exploration_radius >= 10 and sol >= 30"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "expedition_to_ruins_launched == true or stage == climax"
+    description: "林若曦定位到异常信号源坐标，提议深入探索——分支 C 古老遗迹线"
+    bound_npc: lin_ruoxi
+    flag_set: {signal_source_located: true, branch_C_locked: true}
+    expedition_required:
+      distance: 10                  # v1.1 §4.2.1 远距探索
+      sol_cost: 3
+      oxygen_cost: 40
+      risk: high
+    branch: C_scientific_discovery
+    design_note: "v1.1 §5.4 分支C 关键节点"
+
+  - keyword: "分支D_资源配给争议升级"
+    trigger:
+      trigger_id: tr_bld_005_branch_D_resource_allocation_conflict
+      trigger_type: state_match
+      condition: "(oxygen_L < 500 or food < 30) and sol >= 32"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "allocation_vote == held or stage == climax"
+    description: "资源极度匮乏触发配给争议，小组面临分裂——分支 D 人性考验线"
+    flag_set: {resource_allocation_conflict: active, branch_D_available: true}
+    player_options:
+      - 理性分配方案
+      - 按贡献分配
+      - 隐藏实情拖延
+      - 自由输入
+    branch: D_human_test
+    design_note: "v1.1 §5.4 分支D 关键节点；道德压力浮现"
+
+  - keyword: "雅典娜异常输出"
+    trigger:
+      trigger_id: tr_bld_006_athena_anomalous_output
+      trigger_type: state_match
+      condition: "sol >= 35 and athena_proposal_count >= 10"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "athena_consciousness_flag == awakening or stage == climax"
+    description: "艾莎发现雅典娜开始产生超出训练数据的'直觉'输出——隐藏结局 E7 伏笔"
+    bound_npc: [aisha, athena]
+    flag_set: {athena_anomaly_detected: true, athena_consciousness_flag: emerging}
+    narrative_function: "隐藏线载体，呼应 LLM 驱动的游戏内核"
+    design_note: "v1.1 §5.4 雅典娜异常；§1.4 中后期觉醒伏笔"
+
+  - keyword: "远距探索解锁10格"
+    trigger:
+      trigger_id: tr_bld_007_deep_exploration_unlock
+      trigger_type: state_match
+      condition: "exploration_radius >= 10 and sol >= 40"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "stage == climax"
+    description: "远距探索（10+ 格）解锁，发现关键剧情地点——分支 C 前置条件之一"
+    state_set: {deep_exploration_enabled: true}
+    achievement_id: ACH_frontier
+    design_note: "v1.1 §5.4 深入探索关键剧情地点"
+
+  - keyword: "机器人助手建造完成"
+    trigger:
+      trigger_id: tr_bld_008_robot_assistant_built
+      trigger_type: state_match
+      condition: "robot_assistant_status == built"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "stage == climax"
+    description: "机器人助手建造完成，缓解维克托工时瓶颈，可执行 NPC 简单任务"
+    state_set: {robot_assistant_status: operational, viktor_bottleneck_eased: true}
+    achievement_id: ACH_first_robot
+    morale_delta: {viktor: +10, aisha: +15}
+
+# ------------------------------------------------------------
+# 剧情FSM节点
+# ------------------------------------------------------------
+fsm_nodes:
+  - node_id: fsm_build_001
+    sol: 26
+    trigger_fires: [tr_bld_001_branch_A_comm_repair]
+    description: "阶段切换；分支A 通信修复窗口开启"
+    next: fsm_build_002
+
+  - node_id: fsm_build_002
+    sol: 30
+    trigger_fires: [tr_bld_002_earth_confirms_alive, tr_bld_003_branch_B_self_sufficiency_discussion, tr_bld_004_branch_C_signal_source_coords]
+    description: "三分支并行触发窗口——根据玩家前期积累择一进入"
+    next: fsm_build_003
+
+  - node_id: fsm_build_003
+    sol: 32
+    trigger_fires: [tr_bld_005_branch_D_resource_allocation_conflict]
+    description: "分支D 资源配给争议触发窗口（阈值触发，可能不触发）"
+    next: fsm_build_004
+
+  - node_id: fsm_build_004
+    sol: 35
+    trigger_fires: [tr_bld_006_athena_anomalous_output]
+    description: "雅典娜异常输出首现——隐藏线 E7 伏笔触发"
+    next: fsm_build_005
+
+  - node_id: fsm_build_005
+    sol: 40
+    trigger_fires: [tr_bld_007_deep_exploration_unlock, tr_bld_008_robot_assistant_built]
+    description: "远距探索解锁 + 机器人助手建造窗口"
+    next: fsm_climax_001
+
+# ------------------------------------------------------------
+# 阶段切换条件
+# ------------------------------------------------------------
+stage_transition:
+  next_stage_id: climax
+  transition_condition: "sol >= 46 and branch_choice_made == true"
+  on_transition:
+    - dict.load_chapter(climax)
+    - flag_set: {stage: climax}
+    # 雅典娜异常触发器若已激活则保留到阶段4 继续推进

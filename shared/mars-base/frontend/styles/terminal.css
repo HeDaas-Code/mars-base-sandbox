@@ -1,0 +1,224 @@
+/* ============================================
+   终端样式 · xterm.js 定制
+   ============================================ */
+
+/* xterm.js 终端容器 */
+.xterm {
+  height: 100%;
+  padding: 0;
+}
+
+.xterm .xterm-viewport {
+  background-color: var(--color-bg-primary) !important;
+  /* 滚动条样式 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) var(--color-bg-primary);
+}
+
+/* 终端光标样式 */
+.xterm .xterm-cursor {
+  background-color: var(--color-text-primary) !important;
+  z-index: 10;
+}
+
+.xterm .xterm-cursor.blink {
+  animation: cursor-blink var(--anim-cursor-blink) infinite step-end;
+}
+
+/* 终端选中样式 */
+.xterm .xterm-selection div {
+  background-color: rgba(255, 179, 71, 0.25) !important;
+}
+
+/* === 信号遮罩字符样式 ===
+   四档遮罩：见 4.5 节
+   80%+：正常显示
+   50-79%：偶发缺字 ▓（淡遮罩）
+   20-49%：频繁乱码 ▒▓（重遮罩）
+   0-19%：几乎不可读 */
+
+.signal-mask-light {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  text-shadow: none;
+}
+
+.signal-mask-heavy {
+  color: var(--color-text-secondary);
+  opacity: 0.3;
+  text-shadow: none;
+  /* 字符抖动效果（3.2 节：信号干扰抖动） */
+  animation: signal-jitter var(--anim-signal-jitter) infinite alternate;
+}
+
+.signal-mask-unreadable {
+  color: var(--color-text-secondary);
+  opacity: 0.15;
+  text-shadow: none;
+  animation: signal-jitter 100ms infinite alternate;
+}
+
+/* === NPC 消息样式 === */
+.npc-msg {
+  margin: 4px 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--color-border);
+}
+
+.npc-msg-header {
+  font-size: var(--font-size-status);
+  color: var(--color-text-secondary);
+  margin-bottom: 2px;
+}
+
+.npc-msg-sender {
+  font-weight: bold;
+}
+
+.npc-msg-body {
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.npc-msg-signal-annotation {
+  color: var(--color-signal);
+  opacity: 0.6;
+  font-size: var(--font-size-status);
+  font-style: italic;
+}
+
+/* === 系统消息样式 === */
+.sys-msg {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-status);
+  margin: 2px 0;
+}
+
+.sys-msg-alert {
+  color: var(--color-warning);
+  text-shadow: 0 0 4px rgba(255, 68, 68, 0.5);
+}
+
+.sys-msg-ok {
+  color: var(--color-safe);
+}
+
+.sys-msg-warn {
+  color: var(--color-attention);
+}
+
+/* === 玩家消息标识 === */
+.player-msg .npc-msg-sender {
+  color: var(--color-signal);
+}
+
+/* === 信号强度四段色块条 === */
+.signal-bars {
+  display: inline-flex;
+  gap: 2px;
+  align-items: flex-end;
+  height: 12px;
+}
+
+.signal-bar {
+  width: 4px;
+  background-color: var(--color-border);
+  transition: background-color 0.3s;
+}
+
+.signal-bar:nth-child(1) { height: 25%; }
+.signal-bar:nth-child(2) { height: 50%; }
+.signal-bar:nth-child(3) { height: 75%; }
+.signal-bar:nth-child(4) { height: 100%; }
+
+.signal-bar.lit {
+  background-color: var(--color-safe);
+}
+
+.signal-bar.lit-warn {
+  background-color: var(--color-attention);
+}
+
+.signal-bar.lit-danger {
+  background-color: var(--color-warning);
+}
+
+/* === 状态指示灯 === */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.status-dot.ok { background-color: var(--color-safe); box-shadow: 0 0 4px var(--color-safe); }
+.status-dot.warn { background-color: var(--color-attention); box-shadow: 0 0 4px var(--color-attention); }
+.status-dot.danger {
+  background-color: var(--color-warning);
+  box-shadow: 0 0 6px var(--color-warning);
+  animation: pulse-danger var(--anim-pulse) infinite;
+}
+.status-dot.offline { background-color: var(--status-offline); }
+.status-dot.unknown {
+  background-color: var(--status-offline);
+  animation: blink-unknown 1.5s infinite;
+}
+.status-dot.emergency {
+  background-color: var(--color-warning);
+  animation: blink-fast 0.5s infinite;
+}
+
+/* === 警报状态：屏幕边缘红色脉冲晕染（3.3 节） === */
+.app-container.alert-mode {
+  animation: alert-pulse var(--anim-pulse) infinite;
+}
+
+@keyframes alert-pulse {
+  0%, 100% { box-shadow: inset 0 0 80px rgba(255, 68, 68, 0); }
+  50% { box-shadow: inset 0 0 80px rgba(255, 68, 68, 0.4); }
+}
+
+/* === 信号完全中断状态（5.2 节） === */
+.app-container.signal-lost {
+  background-color: #000;
+}
+
+.app-container.signal-lost .main-area {
+  opacity: 0.1;
+}
+
+/* === 事件流容器（嵌入终端流下方，事件/选项/followup 渲染于此） ===
+   xterm.js 是 canvas 渲染，无法内嵌 DOM；事件面板作为兄弟 DOM 流容器
+   与 xterm 同级滚动，事件触发时滚至底部，避免吃掉 xterm 主交互区 */
+.event-stream {
+  max-height: 45vh;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 8px;
+  background-color: var(--color-bg-primary);
+  border-top: 1px dashed var(--color-border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) var(--color-bg-primary);
+}
+
+.event-stream:empty {
+  display: none;
+}
+
+.event-stream::-webkit-scrollbar {
+  width: 6px;
+}
+
+.event-stream::-webkit-scrollbar-track {
+  background-color: var(--color-bg-primary);
+}
+
+.event-stream::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 3px;
+}
+

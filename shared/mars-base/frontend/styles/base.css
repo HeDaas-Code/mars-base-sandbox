@@ -1,0 +1,180 @@
+/* ============================================
+   基础样式 · 重置与全局
+   ============================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono), var(--font-cn);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  /* CRT 磷光屏效果：极淡的水平扫描线 */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 179, 71, 0.03) 0px,
+      rgba(255, 179, 71, 0.03) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  /* 文字辉光模拟 */
+  text-shadow: 0 0 2px rgba(255, 179, 71, 0.4);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* === 滚动条样式 === */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* === 通用面板边框（1.4 节：CSS 绘制细线边框） === */
+.panel {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  padding: 8px;
+}
+
+.panel-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-status);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+/* === 主应用容器 === */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+.main-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: var(--layout-gap);
+  background-color: var(--color-border);
+}
+
+/* === 视图切换标签 === */
+.terminal-header {
+  display: flex;
+  align-items: stretch;
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.view-tabs {
+  display: flex;
+  background-color: transparent;
+  border-bottom: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-status);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.tab:hover {
+  color: var(--color-text-primary);
+  background: rgba(255, 179, 71, 0.05);
+}
+
+.tab.active {
+  color: var(--color-text-highlight);
+  background: rgba(255, 179, 71, 0.1);
+  border-bottom: 2px solid var(--color-text-primary);
+}
+
+/* === 终端容器 === */
+.terminal-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg-primary);
+  overflow: hidden;
+}
+
+.terminal {
+  flex: 1;
+  padding: 8px;
+  overflow: hidden;
+}
+
+/* === 输入区 === */
+.input-area {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
+  padding: 4px 8px;
+  height: 28px;
+}
+
+.input-area .prompt {
+  color: var(--color-text-primary);
+  margin-right: 6px;
+  text-shadow: 0 0 4px rgba(255, 179, 71, 0.6);
+  animation: cursor-blink var(--anim-cursor-blink) infinite;
+}
+
+.player-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono), var(--font-cn);
+  font-size: var(--font-size-body);
+  caret-color: var(--color-text-primary);
+}
+
+.player-input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+}

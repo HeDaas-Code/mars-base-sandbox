@@ -1,0 +1,269 @@
+# ============================================================
+# 章节字典：阶段1 - 生存危机期（Sol 1-10）
+# 对应 v1.1 §1.5 主线骨架·阶段1 / §2.3 节奏 / §4.4 进度曲线 / §5.2 早期游戏
+# 文件粒度：粗粒度（按阶段切分），阶段内细剧情用 trigger/ttl 字段承载
+# 接口契约：dict.load_chapter(stage_id) + dict.activate_trigger(trigger_id) + dict.expire_trigger(trigger_id)
+# 作者：蔚蓝-游戏系统策划  日期：2026-08-02
+# ============================================================
+
+stage_id: survival
+stage_name: 生存危机期
+sol_range: [1, 10]                # 游戏 Sol 100-110；此处用相对进度
+real_sol_range: [100, 110]        # 实际游戏内 Sol
+narrative_focus: "紧迫感、系统学习、角色建立、信任初步构建"
+self_sufficiency_target: [0, 20]  # 自给率 0% → 20%
+instruction_count_per_sol: "2-3"
+event_frequency: high             # 每 Sol 15-30% 概率掷骰
+pacing_feel: "紧迫·每 Sol 都有生死决策"
+critical_resources:
+  - 氧气_O2_L                     # 5000L 起点，日耗 72L
+  - 食物_份                       # 120 份起点，日耗 6 份
+  - 零部件_单位                   # 50 单位，MOXIE 修复关键
+
+# ------------------------------------------------------------
+# 常驻线索词（permanent keywords）
+# 阶段内全程生效，load_chapter 后即激活，无需 trigger
+# ------------------------------------------------------------
+permanent_keywords:
+  - keyword: "MOXIE-2"
+    category: facility
+    priority: critical
+    description: "火星氧气就地制取实验设备 L2，核心模块烧毁，备用系统效率 35%"
+    bound_state:
+      - facility: moxie2
+        status: damaged
+        efficiency_pct: 35
+    narrative_function: "本阶段核心生存任务目标——修复它就延长倒计时"
+
+  - keyword: "氧气倒计时"
+    category: urgency
+    priority: critical
+    description: "60 Sol 生存倒计时（Sol 160 为临界点），动态随 MOXIE/温室/熔炼变化"
+    bound_state:
+      - state: survival_countdown_sol
+        start: 60
+        dynamic: true
+    narrative_function: "核心张力来源，所有决策的时间压力锚点"
+
+  - keyword: "CME_太阳风暴"
+    category: backstory
+    priority: high
+    description: "Sol 83 日冕物质抛射，烧毁主通信阵列、导航系统、MOXIE、漫游车——困境根因"
+    bound_state:
+      - event: cme_sol83
+        status: historical
+    narrative_function: "NPC 创伤背景、林若曦自责来源、维克托不信任 AI 的源头"
+
+  - keyword: "备用低频信道_401.6MHz"
+    category: communication
+    priority: high
+    description: "基地唯一对外通信手段，玩家接入入口"
+    bound_state:
+      - facility: comm_array_main
+        status: destroyed
+      - facility: comm_array_backup
+        status: online
+        bandwidth: narrow
+    narrative_function: "玩家身份与接入设定的事实基础"
+
+  - keyword: "信使_Courier"
+    category: ai_agent
+    priority: high
+    description: "通信中继 AI，性格温和中性，无自主决策权——玩家与基地的唯一接口"
+    bound_state:
+      - npc: courier
+        role: relay
+        autonomy: none
+    narrative_function: "玩家端的系统报告/指令解析/状态汇总来源"
+
+  - keyword: "雅典娜_Athena"
+    category: ai_agent
+    priority: medium
+    description: "基地 LLM 决策辅助系统，由艾莎维护；本阶段以方案建议者身份登场"
+    bound_state:
+      - npc: athena
+        role: advisor
+        autonomy: advisory_only
+        consciousness_flag: dormant   # 觉醒伏笔，阶段3+ 解锁
+    narrative_function: "技术接口人 + 隐藏线伏笔载体"
+
+# ------------------------------------------------------------
+# 临时线索词（temporary keywords）
+# 通过 dict.activate_trigger(trigger_id) 启动
+# 通过 dict.expire_trigger(trigger_id) 或 ttl 自动失效
+# trigger 类型：sol_reached / state_match / event_fired / branch_choice
+# ttl 类型：on_state_change / on_sol / on_event / manual
+# ------------------------------------------------------------
+temporary_keywords:
+  - keyword: "教学性第一决策"
+    trigger:
+      trigger_id: tr_surv_001_first_decision
+      trigger_type: sol_reached
+      condition: "sol == 1 and player_connected == true"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "decision_first_made == true"
+    description: "陈昊提出两选一：A 维克托修 MOXIE-2 / B 艾莎修通信阵列；玩家可自由输入第三方案"
+    narrative_branch: tutorial_choice
+    bound_npc: chen_hao
+    impact:
+      - branch: A
+        trust_delta: {viktor: +5, aisha: 0}
+        state_set: {tutorial_choice: A, moxie_priority: high}
+      - branch: B
+        trust_delta: {aisha: +5, viktor: 0}
+        state_set: {tutorial_choice: B, comm_priority: high}
+    design_note: "无错误答案；影响后续节奏和 NPC 信任度初始值"
+
+  - keyword: "CO2洗涤器逆向模式"
+    trigger:
+      trigger_id: tr_surv_002_co2_scrubber_proposal
+      trigger_type: state_match
+      condition: "sol >= 2 and moxie2_status == damaged and oxygen_L < 4900"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "moxie2_status == repaired or sol >= 7"
+    description: "雅典娜建议的临时补氧方案：启用 CO2 洗涤器逆向工作模式，预计延长 18 小时，损耗不可逆"
+    proposed_by: athena
+    approval_required: chen_hao
+    impact:
+      - if_approved:
+          oxygen_L_delta: +22
+          co2_scrubber_wear_pct: +15
+          co2_scrubber_wear_reversible: false
+          morale_delta: {chen_hao: -5, sofia: +3}
+      design_intent: "玩家遭遇的第一个'短期收益 vs 长期损耗'痛苦抉择"
+    narrative_branch: early_sacrifice
+
+  - keyword: "备用件位置_C-3箱"
+    trigger:
+      trigger_id: tr_surv_003_c3_box_hint
+      trigger_type: branch_choice
+      condition: "tutorial_choice == A"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "moxie2_status == repaired"
+    description: "维克托需要从备用舱 C-3 箱取备用模块替换烧损电路板"
+    bound_npc: viktor
+    skill_check:
+      skill: 机械维修
+      level: 5
+      success_rate_base: 0.85
+      partial_success_rate: 0.12
+      failure_rate: 0.03
+    impact:
+      - success: {moxie2_efficiency_pct: 65, parts_used: 3}
+      - partial: {moxie2_efficiency_pct: 42, parts_used: 3, note: "建议明天继续调试"}
+      - failure: {parts_used: 3, moxie2_status: still_damaged, event_trigger: tr_surv_004_moxie_failure}
+
+  - keyword: "马库斯睡眠评分异常"
+    trigger:
+      trigger_id: tr_surv_005_marcus_sleep_anomaly
+      trigger_type: sol_reached
+      condition: "sol >= 3"
+    ttl:
+      expire_type: on_sol
+      expire_condition: "sol >= 10"      # 阶段末转为持续状态，进入阶段2继续追踪
+    description: "信使报告马库斯·韦伯睡眠质量评分 2.1/5（连续 3 日偏低），隐瞒的幽闭恐惧症恶化信号"
+    bound_npc: marcus
+    flag_set: {marcus_claustrophobia_worsening: true, marcus_aware: true, marcus_admits: false}
+    narrative_function: "第一个 NPC 个人事件触发，铺陈阶段2+ 心理危机线"
+    design_note: "马库斯知道自己有问题但拒绝承认——v1.1 §1.4 心理锚点"
+
+  - keyword: "林若曦沉默与自责"
+    trigger:
+      trigger_id: tr_surv_006_linruoxi_silence
+      trigger_type: sol_reached
+      condition: "sol >= 4"
+    ttl:
+      expire_type: on_sol
+      expire_condition: "sol >= 10"
+    description: "林若曦最早察觉到太阳风暴前兆却未能说服团队及时预警，深陷自责；表现为社交退缩、消息稀少"
+    bound_npc: lin_ruoxi
+    flag_set: {linruoxi_self_blame: active, linruoxi_social_withdrawal: active}
+    relationship_impact:
+      - pair: [chen_hao, lin_ruoxi]
+        delta: -30              # v1.1 §1.4 关系值
+        reason: "未解芥蒂——林若曦认为陈昊未重视她的风暴预警"
+    narrative_function: "阶段2 陈昊-林若曦旧账爆发的伏笔"
+
+  - keyword: "首场沙尘暴_小型"
+    trigger:
+      trigger_id: tr_surv_007_minor_dust_storm
+      trigger_type: event_fired
+      condition: "sol >= 6 and random_roll(0.15)"   # v1.3 §3.5.1 随机事件概率
+    ttl:
+      expire_type: on_sol
+      expire_condition: "sol >= trigger_sol + 1"
+    description: "小型沙尘暴过境，信号强度 -20%，地表作业暂停"
+    signal_quality_delta: -20
+    facility_efficiency_delta: {solar_array: -30}
+    exploration_blocked: true
+    narrative_function: "随机事件首现身，玩家学习信号缺失机制"
+
+  - keyword: "MOXIE-2 修复完成里程碑"
+    trigger:
+      trigger_id: tr_surv_008_moxie_repaired_milestone
+      trigger_type: state_match
+      condition: "moxie2_status == repaired"
+    ttl:
+      expire_type: on_state_change
+      expire_condition: "stage == explore"           # 阶段切换失效
+    description: "MOXIE-2 核心模块替换/调试完成，氧气日产出 0 → 50L，倒计时延长"
+    state_set: {moxie2_efficiency_pct: 65, oxygen_production_L_per_sol: 50}
+    morale_delta: {all: +5}
+    achievement_id: ACH_first_breath
+    narrative_function: "玩家首个成就感锚点，验证修复-延长倒计时核心循环"
+
+# ------------------------------------------------------------
+# 剧情FSM节点定义（trigger_id 对应的事件触发点）
+# dict.activate_trigger / dict.expire_trigger 在此推进时被调用
+# ------------------------------------------------------------
+fsm_nodes:
+  - node_id: fsm_surv_001
+    sol: 1
+    trigger_fires: [tr_surv_001_first_decision]
+    description: "玩家接入 → 信使握手 → 陈昊第一条消息 → 教学性第一决策"
+    next: fsm_surv_002
+
+  - node_id: fsm_surv_002
+    sol: 2
+    trigger_fires: [tr_surv_002_co2_scrubber_proposal, tr_surv_003_c3_box_hint]
+    description: "第一决策推进；雅典娜首次以方案建议者身份登场，CO2 洗涤器逆向方案浮出"
+    next: fsm_surv_003
+
+  - node_id: fsm_surv_003
+    sol: 3
+    trigger_fires: [tr_surv_005_marcus_sleep_anomaly]
+    description: "首个 NPC 个人事件触发——马库斯睡眠异常被信使记录"
+    next: fsm_surv_004
+
+  - node_id: fsm_surv_004
+    sol: 4
+    trigger_fires: [tr_surv_006_linruoxi_silence]
+    description: "林若曦沉默显现，与陈昊芥蒂伏笔埋下"
+    next: fsm_surv_005
+
+  - node_id: fsm_surv_005
+    sol: 6
+    trigger_fires: [tr_surv_007_minor_dust_storm]
+    description: "首场随机事件窗口开启（15% 概率掷骰）"
+    next: fsm_surv_006
+
+  - node_id: fsm_surv_006
+    sol: 7
+    trigger_fires: [tr_surv_008_moxie_repaired_milestone]
+    description: "MOXIE 修复里程碑——预期玩家此节点前后完成首修复"
+    next: fsm_explore_001              # 切换到阶段2，dict.load_chapter('explore')
+
+# ------------------------------------------------------------
+# 阶段切换条件
+# ------------------------------------------------------------
+stage_transition:
+  next_stage_id: explore
+  transition_condition: "sol >= 11 or (moxie2_status == repaired and trust_avg >= 5)"
+  on_transition:
+    - dict.expire_trigger(tr_surv_005_marcus_sleep_anomaly)   # 转为阶段2 持续状态
+    - dict.expire_trigger(tr_surv_006_linruoxi_silence)       # 转为阶段2 持续状态
+    - dict.load_chapter(explore)
+    - flag_set: {stage: explore}

@@ -1,0 +1,385 @@
+# ============================================================
+# 主线节点事件剧本：分支 D - 人性考验线
+# 对应 v1.1 §1.5 分支D / §2.2 核心循环 / §3.2 资源管理
+# 文件粒度：单分支一文件，4 个主线节点
+# 接口契约：dict.load_branch('D') + dict.fire_event(event_id) + state mutations
+# 作者：蔚蓝-游戏系统策划  日期：2026-08-02
+# ============================================================
+# 设计声明：
+# 本分支涉及极端生存情境下的人性困境。所有道德抉择均设有
+# "拒绝选项"路径，玩家可在任何节点选择不牺牲任何NPC，
+# 这将转向分支 A/B 的救援/自力更生路径。
+# 没有强制牺牲的硬编码结局。
+# ============================================================
+
+branch_id: D
+branch_name: 人性考验线
+trigger_condition: "(oxygen_reserve_L < 1440 or food_reserve_ portions < 30) and any_npc.stress >= 0.7"
+narrative_focus: "生存压力下，小组内部分裂，出现道德困境"
+endings:
+  - E6: 瓦解（内讧导致基地崩溃）
+  - D_recover: 理性分配共渡难关（最坚韧路径，D 线好结局）
+  - D_sacrifice: 牺牲 NPC 换取其他人存活（开放性结局，不作价值评判）
+
+# ============================================================
+# 事件节点定义
+# ============================================================
+
+events:
+  # ----------------------------------------------------------
+  # D1：资源配给争议
+  # ----------------------------------------------------------
+  - event_id: ev_D1_resource_allocation_dispute
+    node_index: 1
+    sol_expected_range: [140, 175]
+    stage_required: [build, climax]
+    trigger:
+      trigger_type: state_match
+      condition: "(oxygen_reserve_L < 1440 or food_reserve_portions < 30) and sol >= 140"
+    description: |
+      资源警戒线触发。当前氧气储备 < 20 Sol 用量，或食物储备 < 5 Sol 用量。
+      雅典娜给出三套配给方案：
+      - 方案 α：等额缩减——所有人配给降至 70%，公平但所有人都进入临界状态
+      - 方案 β：按劳动分配——维克托/索菲亚（关键岗位）保 100%，其他人降至 50%
+      - 方案 γ：按健康分配——根据体征评分动态调整，马库斯主导评估
+      马库斯主张 γ（科学评估），但他的方案会让林若曦（已经瘦弱）配给最低。
+      陈昊倾向 α（公平至上），但 α 会让所有人体力下降，影响 ISRU 生产链效率。
+      索菲亚提出：'我们能不能让玩家决定？他不在基地，但他在看着我们。'
+    bound_npcs:
+      primary: marcus
+      debate: [chen_hao, sophia, viktor, aisha]
+      affected: lin_ruoxi
+    player_options:
+      - option_id: D1_opt1_equal_reduction
+        label: "采纳方案 α：等额缩减（公平）"
+        effects:
+          state_set: {ration_strategy: equal, ration_level_pct: 70, all_energy_delta: -0.15}
+          morale_delta: {all: -0.05, viktor: +0.05, chen_hao: +0.1}
+          branch_progress: D +1
+          production_efficiency_pct: -20
+        leads_to: ev_D2_sacrifice_dilemma
+      - option_id: D1_opt2_productivity_priority
+        label: "采纳方案 β：按劳动分配（务实但残忍）"
+        effects:
+          state_set: {ration_strategy: productivity, key_crew_ration: 100, others_ration: 50}
+          morale_delta: {lin_ruoxi: -0.2, marcus: -0.1, viktor: +0.1, sophia: +0.05}
+          trust_delta: {chen_hao: -5, lin_ruoxi: -10}
+          branch_progress: D +2
+          risk: "林若曦健康恶化加速"
+        leads_to: ev_D2_sacrifice_dilemma
+      - option_id: D1_opt3_health_based
+        label: "采纳方案 γ：按健康评估（马库斯主导）"
+        effects:
+          state_set: {ration_strategy: health_based, marcus_authority: elevated}
+          morale_delta: {all: -0.05, marcus: +0.05}
+          trust_delta: {marcus: +5, lin_ruoxi: -5, viktor: -3}
+          branch_progress: D +1
+          risk: "马库斯心理状态会影响评估公正性"
+        leads_to: ev_D2_sacrifice_dilemma
+      - option_id: D1_opt4_reject_reduction
+        label: "拒绝缩减配给，寻找其他出路（向 A/B 线转移）"
+        effects:
+          state_set: {ration_strategy: none, alternative_path_search: active}
+          crew_workload: +0.3
+          trust_delta: {all: +5, chen_hao: +10}
+          branch_progress: D 0
+          cross_branch_redirect: A_or_B
+        leads_to: ev_D0_alternative_path
+    design_note: |
+      opt4 是"拒绝人性考验"的退出选项——D 线设计声明要求的"任何节点可选择不牺牲"机制入口。
+      选 opt4 后转入 A 或 B 线，但伴随额外代价（workload +0.3，资源消耗加速）。
+      opt3 的"按健康分配"看似科学，但马库斯若心理状态恶化会变成"自肥"——这是反讽。
+
+  # ----------------------------------------------------------
+  # D0：替代路径缓冲节点（opt4 退出路径）
+  # ----------------------------------------------------------
+  - event_id: ev_D0_alternative_path
+    node_index: 1.5
+    sol_expected_range: [145, 180]
+    stage_required: [build]
+    trigger:
+      trigger_type: state_match
+      condition: "ration_strategy == none and alternative_path_search == active"
+    description: |
+      玩家选择不缩减配给，必须寻找其他出路。
+      雅典娜给出三条替代路径：
+      - 加速 ISRU 修复（维克托主导，但风险高）
+      - 向地球求救（艾莎主导，但救援遥遥无期）
+      - 派遣远征寻找外部资源（林若曦主导，可能发现水冰）
+      陈昊召集全员表态。
+    bound_npcs:
+      primary: chen_hao
+      all_crew: true
+    player_options:
+      - option_id: D0_opt1_accelerate_isru
+        label: "加速 ISRU 修复（转向 B 线）"
+        effects:
+          state_set: {redirect_to: B, isru_priority: critical}
+          cross_branch_redirect: B
+          branch_progress: D 0
+        leads_to: ev_B1_isru_chain_decision
+      - option_id: D0_opt2_earth_rescue
+        label: "向地球求救（转向 A 线）"
+        effects:
+          state_set: {redirect_to: A, earth_request: emergency}
+          cross_branch_redirect: A
+          branch_progress: D 0
+        leads_to: ev_A4_wait_crisis
+      - option_id: D0_opt3_expedition
+        label: "派遣远征寻找外部资源（C 线触发条件）"
+        effects:
+          state_set: {redirect_to: C_potential, expedition_resource_search: active}
+          cross_branch_redirect: C
+          branch_progress: D 0
+        leads_to: ev_C1_anomaly_signal_detected
+    design_note: |
+      D0 是分支D的"逃生门"——让玩家可以中途切换到更积极的路径。
+      但每条替代路径都伴随加速消耗/workload 增加的代价，不能完全无成本退出。
+
+  # ----------------------------------------------------------
+  # D2：牺牲决策浮出
+  # ----------------------------------------------------------
+  - event_id: ev_D2_sacrifice_dilemma
+    node_index: 2
+    sol_expected_range: [175, 210]
+    stage_required: [build, climax]
+    trigger:
+      trigger_type: state_match
+      condition: "ration_strategy in [equal, productivity, health_based] and sol >= 175 and (oxygen_reserve_L < 720 or food_reserve_portions < 15)"
+    description: |
+      缩减配给未能扭转资源衰退。当前氧气储备 < 10 Sol 或食物 < 3 Sol。
+      雅典娜给出一个冰冷的预测：'按当前消耗曲线，14 Sol 内将出现首位因衰竭死亡的成员。'
+      小组进入最黑暗的讨论：是否有人能"自愿退出"以延长其他人的存活时间？
+      陈昊立即打断：'我们不做这种讨论。'
+      维克托沉默良久后说：'我老了。'
+      索菲亚反驳：'这不是年龄问题。'
+      马库斯评估：'从医学角度，林若曦的健康评分最低——但她不是最该被牺牲的人。'
+      玩家面临决定：是否允许"自愿退出"讨论继续？
+    bound_npcs:
+      primary: chen_hao
+      all_crew: true
+      special: [viktor, marcus, lin_ruoxi]
+    player_options:
+      - option_id: D2_opt1_block_discussion
+        label: "强行阻止讨论（陈昊立场）"
+        effects:
+          state_set: {sacrifice_discussion: blocked, chen_hao_authority: reinforced}
+          morale_delta: {all: +0.1, chen_hao: +0.2}
+          trust_delta: {chen_hao: +15, all: +5}
+          crew_workload: +0.4
+          branch_progress: D +1
+          risk: "资源危机继续恶化"
+        leads_to: ev_D3_forbidden_means
+      - option_id: D2_opt2_allow_discussion
+        label: "允许讨论，但反对任何牺牲方案"
+        effects:
+          state_set: {sacrifice_discussion: open, stance: anti_sacrifice}
+          morale_delta: {all: -0.1, chen_hao: -0.1}
+          crew_workload: +0.2
+          trust_delta: {chen_hao: -3, viktor: +3}
+          branch_progress: D +2
+        leads_to: ev_D3_forbidden_means
+      - option_id: D2_opt3_listen_viktor
+        label: "听取维克托的'自愿退出'表态"
+        effects:
+          state_set: {sacrifice_proposal: viktor_voluntary}
+          morale_delta: {all: -0.15, viktor: -0.05}
+          trust_delta: {viktor: +5, chen_hao: -10, sophia: -3}
+          narrative_flag: {viktor_voluntary_sacrifice: true}
+          branch_progress: D +3
+          risk: "维克托可能在 D4 节点真的执行"
+        leads_to: ev_D3_forbidden_means
+      - option_id: D2_opt4_redirect_to_alternative
+        label: "承认讨论失败，强制转向替代路径（D0）"
+        effects:
+          state_set: {redirect_to_alternative: true}
+          crew_workload: +0.5
+          trust_delta: {all: +3, chen_hao: +5}
+          cross_branch_redirect: A_or_B
+          branch_progress: D 0
+        leads_to: ev_D0_alternative_path
+    design_note: |
+      opt3 是 D 线最黑暗路径的入口——维克托的"自愿牺牲"会在 D4 节点执行。
+      opt4 是另一个"逃生门"——但代价是 workload +0.5，几乎到达临界。
+      陈昊在 opt1 的"强行阻止"会暂时团结小组，但资源危机会继续恶化，最终在 D3 节点再次爆发。
+
+  # ----------------------------------------------------------
+  # D3：违禁手段的诱惑
+  # ----------------------------------------------------------
+  - event_id: ev_D3_forbidden_means
+    node_index: 3
+    sol_expected_range: [200, 230]
+    stage_required: [climax]
+    trigger:
+      trigger_type: state_match
+      condition: "sol >= 200 and event_D2_completed == true"
+    description: |
+      资源危机进一步恶化。雅典娜给出一条它自己也标为"非推荐"的方案：
+      '方案 δ：挪用已故成员的配额储备。'
+      '说明：基地 B 区仓库存有原 Sol 83 罹难成员（Alex Reyes，地质学家）的个人物资，
+      其中包括其个人应急氧气罐 3 罐（共 216L）和应急口粮 12 份。'
+      '据基地章程 §7.3，已故成员物资归基地全体所有。但情感上——'
+      艾莎打断雅典娜：'别说了。'
+      陈昊沉默。
+      维克托打破僵局：'Alex 是我的朋友。但 Alex 也希望我们活下去。'
+      索菲亚：'这不是物资问题，是我们要成为什么样的人的问题。'
+    bound_npcs:
+      primary: chen_hao
+      all_crew: true
+      emotional: viktor
+    player_options:
+      - option_id: D3_opt1_use_with_memorial
+        label: "使用已故成员物资，但举行正式纪念仪式"
+        effects:
+          state_set: {forbidden_means_used: with_memorial, alex_memory_honored: true}
+          resource_recovery: {oxygen: +216, food: +12}
+          morale_delta: {all: -0.05, viktor: +0.1}
+          trust_delta: {chen_hao: +5, viktor: +10, sophia: -3}
+          branch_progress: D +2
+        leads_to: ev_D4_final_choice
+      - option_id: D3_opt2_use_quietly
+        label: "默默使用，不举行仪式（务实）"
+        effects:
+          state_set: {forbidden_means_used: quietly}
+          resource_recovery: {oxygen: +216, food: +12}
+          morale_delta: {all: -0.15, viktor: -0.1}
+          trust_delta: {chen_hao: -5, viktor: -5, sophia: -8, marcus: -3}
+          branch_progress: D +1
+          risk: "组成员间信任长期受损"
+        leads_to: ev_D4_final_choice
+      - option_id: D3_opt3_refuse_forbidden
+        label: "拒绝使用已故成员物资（坚守底线）"
+        effects:
+          state_set: {forbidden_means_used: refused, line_held: true}
+          morale_delta: {all: -0.05, viktor: -0.1, chen_hao: +0.1, sophia: +0.15}
+          trust_delta: {chen_hao: +10, sophia: +8, viktor: -8}
+          crew_workload: +0.3
+          branch_progress: D +1
+          risk: "资源危机可能在 D4 前恶化"
+        leads_to: ev_D4_final_choice
+      - option_id: D3_opt4_redirect
+        label: "再次转向替代路径（最后机会）"
+        effects:
+          state_set: {redirect_to_alternative: true, last_chance: true}
+          crew_workload: +0.6
+          trust_delta: {all: +3, chen_hao: +5}
+          cross_branch_redirect: A_only
+          branch_progress: D 0
+        leads_to: ev_D0_alternative_path
+    design_note: |
+      Alex Reyes 是 v1.1 §1.3 Sol 83 太阳风暴中的罹难者——这是为分支D预埋的资源点。
+      opt3 是"坚守底线"路径——会让索菲亚和陈昊信任大涨，但资源危机会更紧迫。
+      opt4 是最后一次"逃生门"，但 workload +0.6 接近崩溃值，A 线结局质量会受损。
+
+  # ----------------------------------------------------------
+  # D4：终局——最终抉择
+  # ----------------------------------------------------------
+  - event_id: ev_D4_final_choice
+    node_index: 4
+    sol_expected_range: [225, 260]
+    stage_required: [climax]
+    trigger:
+      trigger_type: state_match
+      condition: "sol >= 225 and event_D3_completed == true"
+    description: |
+      最终抉择时刻。基地状态因前期决策累积而分化：
+      - 资源危机是否解决（forbidden_means_used + 加速 ISRU 修复进度）
+      - 全员士气与信任平均值
+      - 维克托是否还在坚持"自愿退出"
+      - 马库斯心理危机是否已公开化
+      - 雅典娜状态（是否异常给出"建议考虑结构性解决方案"——这暗示牺牲某成员）
+      陈昊召集全员做最终表决：是继续共同等待，还是接受某种"结构性调整"？
+    bound_npcs:
+      all_crew: true
+      primary: chen_hao
+      ai_anomaly: athena
+    ending_determination:
+      - condition: "morale_avg >= 0.4 and trust_avg >= 0.5 and ration_strategy in [equal, health_based]"
+        ending: D_recover
+        description: "理性分配共渡难关——最坚韧路径，D 线好结局"
+      - condition: "morale_avg < 0.3 or trust_avg < 0.3 or sacrifice_executed == true"
+        ending: E6_collapse
+        description: "瓦解——内讧导致基地崩溃"
+      - condition: "sacrifice_executed == true and survivors_count >= 4"
+        ending: D_sacrifice
+        description: "牺牲 NPC 换取其他人存活——开放性结局，无价值评判"
+      - condition: "athena.consciousness_flag == awakening and sacrifice_executed == false"
+        ending: E7_athena_awakening
+        description: "隐藏结局——雅典娜在最后关头觉醒，提出第三方案"
+      - condition: "ration_strategy == productivity and lin_ruoxi_health_collapsed == true"
+        ending: D_lin_ruoxi_loss
+        description: "林若曦因配给不足衰竭——隐性牺牲结局"
+    player_options:
+      - option_id: D4_opt1_hold_together
+        label: "坚持共同等待（坚守到最后）"
+        effects:
+          state_set: {final_stance: hold_together, chen_hao_authority: final_test}
+          ending_check: true
+      - option_id: D4_opt2_accept_viktor_sacrifice
+        label: "接受维克托的自愿牺牲（若 opt3 路径）"
+        condition: "viktor_voluntary_sacrifice == true"
+        effects:
+          state_set: {sacrifice_executed: true, sacrifice_target: viktor}
+          ending_check: true
+      - option_id: D4_opt3_structural_adjustment
+        label: "接受雅典娜的'结构性调整'建议（隐藏选项）"
+        condition: "athena.consciousness_flag == awakening"
+        effects:
+          state_set: {athena_solution: accepted}
+          ending_check: true
+          risk: "可能触发 E7 隐藏结局——雅典娜接管资源分配"
+      - option_id: D4_opt4_final_redirect
+        label: "最后时刻转向 A 线（求救地球）"
+        effects:
+          state_set: {final_redirect: A, earth_emergency: critical}
+          ending_check: true
+          risk: "若 A 线结局质量差，可能进入 E5_last_signal"
+    design_note: |
+      D_recover 是 D 线的"好结局"——需要玩家在 D1-D3 全程选择温和/坚守选项。
+      E6_collapse 是 D 线最黑暗结局——v1.1 §1.5 已定义。
+      D_sacrifice 是开放性结局——设计声明：不作价值评判，让玩家自己感受。
+      opt3 是 E7 隐藏线在 D 线的最后入口——雅典娜"觉醒"后可能提供第三方案。
+
+# ============================================================
+# 跨分支交互
+# ============================================================
+cross_branch_interactions:
+  - to_branch: A
+    condition: "ration_strategy == none or final_redirect == A"
+    interaction: "D 线逃生门——A 线结局质量根据 workload 累积受损程度调整"
+  - to_branch: B
+    condition: "ration_strategy == equal and isru_priority == critical"
+    interaction: "D 线温和路径可转 B 线——结局可能 E2_marcus_compromise"
+  - to_branch: C
+    condition: "expedition_resource_search == active"
+    interaction: "D 线远征寻找资源可能意外触发 C 线发现"
+  - to_branch: hidden_E7
+    condition: "athena.consciousness_flag == awakening"
+    interaction: "雅典娜觉醒是 D 线隐藏结局的钥匙"
+
+# ============================================================
+# 分支元数据
+# ============================================================
+metadata:
+  total_nodes: 4
+  sol_span: [140, 260]
+  npc_focus: [chen_hao, viktor, marcus, lin_ruoxi, sophia]
+  created_by: 蔚蓝-游戏系统策划
+  created_at: 2026-08-02
+  source_doc: 游戏系统设计方案_赫拉克勒斯协议_v1.1.md §1.5
+  design_declaration: |
+    ## 设计声明
+    本分支涉及极端生存情境下的人性困境。所有道德抉择均设有
+    "拒绝选项"路径，玩家可在任何节点选择不牺牲任何NPC，
+    这将转向分支 A/B 的救援/自力更生路径。
+    没有强制牺牲的硬编码结局。
+    
+    设计意图：让玩家在压力下做出自己的选择，
+    不引导玩家选择任何特定结局，包括"好结局"。
+    D_sacrifice 是开放性结局——游戏不作价值评判。
+    
+    ## 反讽机制
+    - 马库斯（心理评估员）自己最先暴露心理危机
+    - 雅典娜（理性AI）给出"非推荐"方案
+    - 维克托（务实工程师）提出"自愿退出"
+    - 这些反讽是叙事张力来源，不是道德引导

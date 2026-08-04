@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>结局面板视觉模板 · Ending Panel · Mars Signal</title>
+  <link rel="stylesheet" href="../styles/variables.css">
+  <link rel="stylesheet" href="../styles/base.css">
+  <link rel="stylesheet" href="../styles/animations.css">
+  <link rel="stylesheet" href="../styles/panels.css">
+  <link rel="stylesheet" href="../styles/event-panel.css">
+  <style>
+    body {
+      background-color: var(--color-bg-primary);
+      font-family: var(--font-mono);
+      color: var(--color-text-primary);
+      padding: 16px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .preview-header {
+      font-family: var(--font-display);
+      font-size: var(--font-size-system);
+      color: var(--color-text-highlight);
+      margin-bottom: 4px;
+    }
+    .preview-sub {
+      font-size: var(--font-size-status);
+      color: var(--color-text-secondary);
+      margin-bottom: 20px;
+    }
+    .section-label {
+      font-family: var(--font-display);
+      font-size: var(--font-size-status);
+      color: var(--color-text-secondary);
+      letter-spacing: 1px;
+      margin: 20px 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .replay-btn {
+      display: block;
+      margin: 8px auto 20px;
+      padding: 4px 16px;
+      background: transparent;
+      border: 1px solid var(--ai-athena);
+      color: var(--ai-athena);
+      font-family: var(--font-mono);
+      font-size: var(--font-size-status);
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+    .replay-btn:hover {
+      background-color: rgba(179, 153, 230, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-header">结局面板 · Ending Panel 视觉模板</div>
+  <div class="preview-sub">对齐：云逸 WebSocket v1.3 §13.3 / §14.3 / §18 验收标准 #17 | 幻影 v2.0 视觉规范 §10</div>
+
+  <!-- 场景一：可能结局列表（展示性，终局节点 story_event.ending_determination 非空时） -->
+  <div class="section-label">[ 场景1 ] 可能结局列表 · ending_determination（紫色虚线边框 · 展示性）</div>
+  <div id="ending-list-target"></div>
+
+  <!-- 场景二：结局命中（option_result.ending 非空时） -->
+  <div class="section-label">[ 场景2 ] 结局命中 · option_result.ending（紫色发光边框 · flash 动画 · 居中）</div>
+  <div id="ending-hit-target"></div>
+  <button class="replay-btn" onclick="replayEndingHit()">↻ 重播命中动画</button>
+
+  <!-- 场景三：完整终局流程（先列表 → 选择后命中） -->
+  <div class="section-label">[ 场景3 ] 完整终局流程模拟（先展示可能结局 → 玩家选择后命中 ENDING_B）</div>
+  <div id="ending-flow-target"></div>
+  <button class="replay-btn" onclick="replayEndingFlow()">↻ 重播完整流程</button>
+
+  <script src="../ws/mock-data.js"></script>
+  <script src="../config/npc-config.js"></script>
+  <script src="../components/event-panel.js"></script>
+  <script>
+    /* === 初始化 EventPanel 实例 === */
+    const eventPanel = new EventPanel();
+
+    /* === Mock 数据来源：mock-data.js MOCK_V13_ENDING_EVENT / MOCK_V13_OPTION_RESULT === */
+
+    /* 场景1：可能结局列表 */
+    function renderEndingList() {
+      const target = document.getElementById('ending-list-target');
+      target.innerHTML = '';
+      const endingDetermination = MOCK_V13_ENDING_EVENT.ending_determination;
+      const fragment = eventPanel._renderEnding(endingDetermination);
+      target.appendChild(fragment);
+    }
+
+    /* 场景2：结局命中 */
+    function renderEndingHit() {
+      const target = document.getElementById('ending-hit-target');
+      target.innerHTML = '';
+      const ending = MOCK_V13_OPTION_RESULT.ending;
+      eventPanel.renderEndingHit(ending, target);
+    }
+
+    function replayEndingHit() {
+      renderEndingHit();
+    }
+
+    /* 场景3：完整终局流程 */
+    function renderEndingFlow() {
+      const target = document.getElementById('ending-flow-target');
+      target.innerHTML = '';
+
+      /* Step 1: 事件叙述 + 可能结局列表 */
+      const eventContainer = document.createElement('div');
+      eventContainer.className = 'event-container type-ending';
+      eventContainer.innerHTML = `
+        <div class="event-header">
+          <span class="event-header-tag type-ending">终局</span>
+          <span class="event-header-sol">Sol ${MOCK_V13_ENDING_EVENT.sol}</span>
+          <span class="event-header-branch">分支 ${MOCK_V13_ENDING_EVENT.branch}</span>
+        </div>
+        <div class="event-desc">
+          ${MOCK_V13_ENDING_EVENT.narrative_segments.map(s => `<p>${s.content}</p>`).join('')}
+        </div>
+      `;
+      target.appendChild(eventContainer);
+
+      /* 可能结局列表 */
+      const endingList = eventPanel._renderEnding(MOCK_V13_ENDING_EVENT.ending_determination);
+      target.appendChild(endingList);
+
+      /* 模拟玩家选择后延时展示结局命中 */
+      setTimeout(() => {
+        const ending = MOCK_V13_OPTION_RESULT.ending;
+        eventPanel.renderEndingHit(ending, target);
+      }, 1500);
+    }
+
+    function replayEndingFlow() {
+      renderEndingFlow();
+    }
+
+    /* 初始渲染 */
+    renderEndingList();
+    renderEndingHit();
+    renderEndingFlow();
+  </script>
+</body>
+</html>
