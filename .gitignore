@@ -50,8 +50,7 @@ chroma_db/
 *.db
 # 检查点文件
 checkpoints.sqlite
-data/checkpoints.sqlite
-prototype/data/checkpoints.sqlite
+backend/data/checkpoints.sqlite
 
 # ---- 测试 / 覆盖率 ----
 .tox/
