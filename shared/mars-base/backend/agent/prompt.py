@@ -1,7 +1,18 @@
 """
-NPC 人格 Prompt 模块
-基于蔚蓝 v1.1 方案中陈昊的角色设定生成 System Prompt
+NPC 人格 Prompt 统一入口
+
+- chen_hao: 保留原 str.format 模板（{game_state}）
+- sophia / viktor / aisha / marcus / lin_ruoxi: 来自 npc_prompts.py 的 Jinja2 模板
+  （注入 stress/morale/trust_in_player/stage/recent_events）
+
+graph.py 的 generate_response 调用 get_system_prompt(agent_id, game_state, npc_state_vars)
+即可获得正确人格。npc_state_vars 由 game_loop / ws_adapter 从 GameState.npc_states 派生。
 """
+
+from typing import Optional, Dict
+
+from .npc_prompts import get_npc_system_prompt, NPC_PROMPT_MAP
+
 
 CHEN_HAO_SYSTEM_PROMPT = """你是陈昊（Dr. Chen Hao），赫拉克勒斯-7号火星基地的任务指挥官。
 
@@ -43,13 +54,36 @@ CHEN_HAO_SYSTEM_PROMPT = """你是陈昊（Dr. Chen Hao），赫拉克勒斯-7�
 """
 
 
-def get_system_prompt(agent_id: str, game_state: str = "") -> str:
-    """获取指定 Agent 的 System Prompt"""
-    prompts = {
-        "chen_hao": CHEN_HAO_SYSTEM_PROMPT,
-    }
-    template = prompts.get(agent_id, CHEN_HAO_SYSTEM_PROMPT)
-    return template.format(game_state=game_state)
+def get_system_prompt(
+    agent_id: str,
+    game_state: str = "",
+    npc_state_vars: Optional[Dict] = None,
+) -> str:
+    """获取指定 Agent 的 System Prompt
+
+    Args:
+        agent_id: NPC 标识（chen_hao / sophia / viktor / aisha / marcus / lin_ruoxi）
+        game_state: 游戏状态上下文字符串（追加到 prompt 末尾）
+        npc_state_vars: NPC 心理状态变量，用于渲染 Jinja2 模板。
+            缺省时用空值渲染（退化但可用）。建议传入：
+            {stress, morale, trust_in_player, stage, recent_events}
+    """
+    if agent_id == "chen_hao":
+        return CHEN_HAO_SYSTEM_PROMPT.format(game_state=game_state)
+
+    # 其余 5 个 NPC 走 Jinja2 模板
+    if agent_id not in NPC_PROMPT_MAP:
+        # 未知 agent_id 兜底：用陈昊模板，避免 KeyError 中断链路
+        return CHEN_HAO_SYSTEM_PROMPT.format(game_state=game_state)
+
+    # 渲染 NPC 人格模板（npc_state_vars 缺省时 Jinja2 Undefined 渲染为空串）
+    state_vars = dict(npc_state_vars or {})
+    persona = get_npc_system_prompt(agent_id, **state_vars)
+
+    # 追加游戏状态上下文
+    if game_state:
+        return f"{persona}\n\n## 当前游戏状态\n{game_state}"
+    return persona
 
 
 def format_game_state(resources: dict, sol: int, npc_states: list = None) -> str:

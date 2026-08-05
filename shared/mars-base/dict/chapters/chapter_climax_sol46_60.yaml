@@ -271,7 +271,7 @@ temporary_keywords:
         - E6_collapse: 分支D 内讧导致基地崩溃
       final_report:
         fields: [结局名称, 生存天数, 资源自给率, NPC关系图谱, 关键决策回顾]
-      closing_line_example: "谢谢你，远方的朋友。没有你的信号，我们会在黑暗中熄灭。" — 陈昊，Sol 160
+      closing_line_example: "谢谢你，远方的朋友。没有你的信号，我们会在黑暗中熄灭。 — 陈昊，Sol 160"
     design_note: "v1.1 §5.6 终局；7 结局对应表"
 
 # ------------------------------------------------------------

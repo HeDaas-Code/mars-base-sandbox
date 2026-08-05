@@ -351,13 +351,17 @@
       term.write('\r\n');
       term.write('> ');
 
-      // 触发 mock session_init
-      marsClient._mockConnect();
-
-      // 短延迟后推送信使引导
-      setTimeout(() => {
-        marsClient.mockTrigger('courier_intro');
-      }, 1200);
+      // 按模式分流：mock 模式走本地 mock，真实模式连接后端
+      if (marsClient.mockMode) {
+        marsClient._mockConnect();
+        // 短延迟后推送信使引导
+        setTimeout(() => {
+          marsClient.mockTrigger('courier_intro');
+        }, 1200);
+      } else {
+        // 真实模式：连接 WS 后端，连接成功后会自动发 hello → 触发 session_init
+        marsClient.connect();
+      }
 
       // 绑定终端输入
       let inputBuffer = '';

@@ -41,6 +41,8 @@ except ImportError:
 # 从 ws_adapter_v2 导入（root 权限问题导致 ws_adapter.py 无法覆盖，v2 为正式版本）
 from ws_adapter_v2 import (
     process_input,
+    process_player_turn,
+    handle_option_select,
     NPC_REGISTRY,
     get_game_state,
     AGENT_TO_NPC_ID,
@@ -220,25 +222,20 @@ async def handle_hello(session: ClientSession, payload: Dict) -> Optional[Dict]:
     return build_session_init(session)
 
 
-async def handle_player_input(session: ClientSession, payload: Dict) -> Optional[Dict]:
-    """处理 player_input 消息 → 调用 Agent 链路 → 返回 agent_message
+async def handle_player_input(session: ClientSession, payload: Dict):
+    """处理 player_input 消息 → 调用 GameLoop → 返回消息列表
 
     payload: {text, target_agent_id?}
+    返回值: 消息信封列表（自然语言通常 1 条；:sol 可能多条含 story_event）
     """
     text = payload.get("text", "").strip()
     target_agent_id = payload.get("target_agent_id")
 
     if not text:
-        return build_error_message("E_EMPTY_INPUT", "输入文本不能为空")
+        return [build_error_message("E_EMPTY_INPUT", "输入文本不能为空")]
 
-    # 如果指定了 target_agent_id，合成 "talk <name> <text>" 格式
-    if target_agent_id and target_agent_id in NPC_REGISTRY:
-        raw_input = f"talk {target_agent_id} {text}"
-        agent_id = target_agent_id
-    else:
-        # 没指定目标 → 用 session.current_target
-        raw_input = f"talk {session.current_target} {text}"
-        agent_id = session.current_target
+    # target_agent_id 优先；否则用 session.current_target
+    agent_id = target_agent_id if (target_agent_id and target_agent_id in NPC_REGISTRY) else session.current_target
 
     logger.info(
         "player_input: text=%r, target=%s, mode=%s",
@@ -247,27 +244,57 @@ async def handle_player_input(session: ClientSession, payload: Dict) -> Optional
         session.response_mode,
     )
 
-    # 调用后端处理（同步函数，放到线程池避免阻塞事件循环）
+    # 调用 GameLoop 统一入口（同步，放线程池避免阻塞事件循环）
     try:
-        result = await asyncio.get_event_loop().run_in_executor(
+        results = await asyncio.get_event_loop().run_in_executor(
             None,
-            process_input,
-            raw_input,
+            process_player_turn,
+            text,
             agent_id,
             session.response_mode,
         )
     except Exception as e:
-        logger.exception("process_input 异常")
-        return build_error_message("E_AGENT_FAILURE", f"Agent 处理失败: {e}")
+        logger.exception("process_player_turn 异常")
+        return [build_error_message("E_AGENT_FAILURE", f"Agent 处理失败: {e}")]
 
-    logger.info(
-        "response: type=%s, sender=%s, latency=%sms",
-        result.get("type"),
-        result.get("payload", {}).get("sender_id"),
-        result.get("payload", {}).get("latency_ms"),
-    )
+    # results 是消息列表
+    for r in results:
+        logger.info(
+            "response: type=%s, sender=%s",
+            r.get("type"),
+            r.get("payload", {}).get("sender_id", r.get("payload", {}).get("event_id", "")),
+        )
 
-    return result
+    return results
+
+
+async def handle_option_select_msg(session: ClientSession, payload: Dict):
+    """处理 option_select 消息（v1.2 §11.4 C→S）→ 返回 option_result
+
+    payload: {event_id, option_id, followup_id?}
+    """
+    event_id = payload.get("event_id", "")
+    option_id = payload.get("option_id", "")
+    followup_id = payload.get("followup_id")
+
+    if not event_id or not option_id:
+        return [build_error_message("E_OPTION_SELECT", "缺少 event_id 或 option_id")]
+
+    logger.info("option_select: event=%s, option=%s, followup=%s", event_id, option_id, followup_id)
+
+    try:
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            handle_option_select,
+            event_id,
+            option_id,
+            followup_id,
+        )
+    except Exception as e:
+        logger.exception("handle_option_select 异常")
+        return [build_error_message("E_OPTION_FAILURE", f"选项处理失败: {e}")]
+
+    return [result]
 
 
 async def handle_command(session: ClientSession, payload: Dict) -> Optional[Dict]:
@@ -309,6 +336,12 @@ async def handle_command(session: ClientSession, payload: Dict) -> Optional[Dict
             }
         # 切换当前对话目标
         session.current_target = target
+        # 同步 GameLoop 的 active_npc（归一化为 canonical 短名）
+        try:
+            from ws_adapter_v2 import get_game_loop, normalize_agent_id
+            get_game_loop().active_npc = normalize_agent_id(target)
+        except Exception as e:
+            logger.debug("同步 game_loop.active_npc 失败: %s", e)
 
         # 如果有后续文本，走 Agent 链路
         if len(args) > 1:
@@ -386,6 +419,9 @@ async def dispatch_message(session: ClientSession, msg: Dict) -> Optional[Dict]:
     elif msg_type == "player_input":
         return await handle_player_input(session, payload)
 
+    elif msg_type == "option_select":
+        return await handle_option_select_msg(session, payload)
+
     elif msg_type == "command":
         return await handle_command(session, payload)
 
@@ -448,24 +484,29 @@ async def client_handler(websocket):
                 logger.exception("消息处理异常 (type=%s)", msg_type)
                 response = build_error_message("E_INTERNAL", f"内部错误: {e}")
 
-            # 发送响应
+            # 发送响应（支持单条 dict 或列表，列表按序连发）
             if response is not None:
-                # 如果请求有 msg_id，在响应里带上它（方便客户端关联）
-                if msg_id and "ack_for" not in response.get("payload", {}):
-                    response["payload"]["_ack_for"] = msg_id
+                responses = response if isinstance(response, list) else [response]
+                for resp in responses:
+                    # 如果请求有 msg_id，在响应里带上它（方便客户端关联）
+                    if msg_id and "ack_for" not in resp.get("payload", {}):
+                        resp["payload"]["_ack_for"] = msg_id
 
-                response_json = json.dumps(response, ensure_ascii=False)
-                try:
-                    await websocket.send(response_json)
-                    # 更新 session 的 last_msg_id
-                    session.last_msg_id = response.get("msg_id")
-                except websockets.exceptions.ConnectionClosed:
-                    logger.warning("发送响应时连接已关闭")
-                    break
+                    response_json = json.dumps(resp, ensure_ascii=False)
+                    try:
+                        await websocket.send(response_json)
+                        # 更新 session 的 last_msg_id
+                        session.last_msg_id = resp.get("msg_id")
+                    except websockets.exceptions.ConnectionClosed:
+                        logger.warning("发送响应时连接已关闭")
+                        break
 
             # 处理后日志
-            resp_type = response.get("type") if response else "无响应"
-            logger.debug("处理完成: req=%s → resp=%s", msg_type, resp_type)
+            if isinstance(response, list):
+                resp_types = [r.get("type") for r in response] if response else ["无响应"]
+            else:
+                resp_types = [response.get("type")] if response else ["无响应"]
+            logger.debug("处理完成: req=%s → resp=%s", msg_type, resp_types)
 
     except websockets.exceptions.ConnectionClosed:
         logger.info("客户端断开: session=%s", session.session_id)
@@ -499,6 +540,16 @@ async def start_server(host: str = "0.0.0.0", port: int = 8000):
     from ws_adapter_v2 import get_agent
     get_agent("chen_hao")
     logger.info("Agent 就绪")
+
+    # 种子化全部 6 个 NPC 的记忆库（B 计划：多 NPC 对话需要各自记忆）
+    try:
+        from agent.memory import get_memory_store
+        from seed_memories import seed_all_memories
+        store = get_memory_store()
+        n = seed_all_memories(store)
+        logger.info("种子记忆就绪: 新写入 %d 条（6 NPC 共享记忆库）", n)
+    except Exception as e:
+        logger.warning("种子记忆写入失败（非致命）: %s", e)
 
     logger.info("=" * 60)
     logger.info("WebSocket 联调服务器启动")

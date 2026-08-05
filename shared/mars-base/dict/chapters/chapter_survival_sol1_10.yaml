@@ -132,7 +132,7 @@ temporary_keywords:
           co2_scrubber_wear_pct: +15
           co2_scrubber_wear_reversible: false
           morale_delta: {chen_hao: -5, sofia: +3}
-      design_intent: "玩家遭遇的第一个'短期收益 vs 长期损耗'痛苦抉择"
+        design_intent: "玩家遭遇的第一个'短期收益 vs 长期损耗'痛苦抉择"
     narrative_branch: early_sacrifice
 
   - keyword: "备用件位置_C-3箱"

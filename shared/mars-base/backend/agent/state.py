@@ -40,3 +40,8 @@ class AgentState(TypedDict):
     summary: str                   # 历史摘要（增量式）
     compressed_count: int           # 已压缩的消息数
     new_memory_id: str              # 本轮新写入的记忆 ID
+
+    # --- NPC 人格渲染变量（game_loop / ws_adapter 注入）---
+    # 用于渲染 sophia/viktor/aisha/marcus/lin_ruoxi 的 Jinja2 人格模板
+    # 缺省时模板变量渲染为空串（退化但可用）
+    npc_state_vars: Optional[dict]
