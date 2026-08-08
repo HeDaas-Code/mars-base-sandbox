@@ -169,7 +169,7 @@ class PlaythroughLogger:
             npc_summary[nid] = {
                 "stress": round(npc.stress, 2),
                 "morale": round(npc.morale, 2),
-                "trust": round(npc.trust_in_player, 1),
+                "trust": npc.trust_in_player,
                 "state": npc.current_state,
             }
         resources = {k: v.get("current", 0) for k, v in gs.resources.items()}
@@ -485,8 +485,8 @@ def generate_report(logger: PlaythroughLogger):
     else:
         print(f"  ✓ 结局已触发")
 
-    # 4. 检查 NPC 心理状态变化
-    state_entries = [e for e in logger.entries if e.get("direction") == "STATE"]
+    # 4. 检查 NPC 心理状态变化（排除重启后的状态）
+    state_entries = [e for e in logger.entries if e.get("direction") == "STATE" and "重启" not in e.get("label", "")]
     if len(state_entries) >= 2:
         first = state_entries[0].get("npcs", {})
         last = state_entries[-1].get("npcs", {})
@@ -502,7 +502,7 @@ def generate_report(logger: PlaythroughLogger):
         else:
             print("  ⚠ NPC 心理状态无变化（情感指令可能未生效）")
 
-    # 5. 检查资源衰减
+    # 5. 检查资源衰减（排除重启后的状态）
     if len(state_entries) >= 2:
         first_res = state_entries[0].get("resources", {})
         last_res = state_entries[-1].get("resources", {})

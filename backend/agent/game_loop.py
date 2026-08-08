@@ -399,12 +399,15 @@ class GameLoop:
 
     def _cmd_restart(self) -> Dict[str, Any]:
         from .game_state import create_initial_game_state
-        self.game_state = create_initial_game_state()
-        self.scheduler = EventScheduler(self.game_state)
+        new_gs = create_initial_game_state()
+        self.game_state.__dict__.update(new_gs.__dict__)
+        self.scheduler.game_state = self.game_state
+        self.scheduler.init_chapter("survival")
+        self.game_state.sol = self.scheduler.chapter.real_sol
         self.ending = None
         self.active_npc = "chen_hao"
         self.response_mode = "deliberate"
-        self.start()
+        self._started = True
         return self._build_command_response(
             [self._seg("◆ 游戏已重置，进入 Sol 100 survival 章节 ◆\n")], {"sol": self.game_state.sol},
         )

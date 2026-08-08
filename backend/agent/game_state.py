@@ -36,8 +36,10 @@ logger = logging.getLogger(__name__)
 # AI 类 sender 不进入 npc_states（8d 文档 §5.1）
 AI_SENDERS: frozenset[str] = frozenset({"athena", "courier"})
 
-# trust_delta 在事件剧本中用整数（如 +10/-5），npc_states 用 0-1 浮点，需 /100 换算
-TRUST_DELTA_DIVISOR: float = 100.0
+# trust_in_player 统一使用 0-100 整数量纲（与 YAML condition 和 emotional delta 对齐）
+# stress/morale/energy 保持 0-1 浮点（emotion_label 查表依赖）
+TRUST_MIN: int = 0
+TRUST_MAX: int = 100
 
 # 数值字段上下限
 CLAMP_MIN: float = 0.0
@@ -105,42 +107,47 @@ def derive_emotion_label(stress: float, morale: float) -> str:
 # chen_hao 无 YAML，按 8d 文档 §1.3 注释用架构 v2.0 §2.3 baseline 占位
 # lin_ruoxi 待单独交付，暂用中性值占位
 NPC_INITIAL_STATES: Dict[str, Dict[str, float]] = {
-    "chen_hao": {"stress": 0.3, "morale": 0.6, "trust_in_player": 0.4, "energy": 0.7},
-    "sophia": {"stress": 0.4, "morale": 0.55, "trust_in_player": 0.35, "energy": 0.8},
-    "viktor": {"stress": 0.5, "morale": 0.5, "trust_in_player": 0.3, "energy": 0.7},
-    "aisha": {"stress": 0.45, "morale": 0.55, "trust_in_player": 0.55, "energy": 0.85},
-    "marcus": {"stress": 0.35, "morale": 0.65, "trust_in_player": 0.4, "energy": 0.55},
-    "lin_ruoxi": {"stress": 0.4, "morale": 0.45, "trust_in_player": 0.35, "energy": 0.7},  # 蔚蓝 YAML v1.0
+    "chen_hao": {"stress": 0.3, "morale": 0.6, "trust_in_player": 40, "energy": 0.7},
+    "sophia": {"stress": 0.4, "morale": 0.55, "trust_in_player": 35, "energy": 0.8},
+    "viktor": {"stress": 0.5, "morale": 0.5, "trust_in_player": 30, "energy": 0.7},
+    "aisha": {"stress": 0.45, "morale": 0.55, "trust_in_player": 55, "energy": 0.85},
+    "marcus": {"stress": 0.35, "morale": 0.65, "trust_in_player": 40, "energy": 0.55},
+    "lin_ruoxi": {"stress": 0.4, "morale": 0.45, "trust_in_player": 35, "energy": 0.7},  # 蔚蓝 YAML v1.0
 }
 
 # 从 NPC YAML psychology.state_machine 提取的状态机定义
 # 用于 derive_current_state 遍历匹配
 NPC_STATE_MACHINES: Dict[str, List[Dict[str, Any]]] = {
     "sophia": [
+        {"state": "stable", "condition": "true"},
         {"state": "stable", "condition": "stress < 0.5 and morale > 0.5"},
         {"state": "strained", "condition": "stress >= 0.5 and stress <= 0.7"},
         {"state": "cracking", "condition": "stress >= 0.7 or morale < 0.3"},
         {"state": "breakdown", "condition": "stress >= 0.85"},
     ],
     "viktor": [
+        {"state": "stoic", "condition": "true"},
         {"state": "stoic", "condition": "stress < 0.6 and morale > 0.4"},
         {"state": "irritated", "condition": "stress >= 0.6 and stress <= 0.75"},
         {"state": "defiant", "condition": "stress >= 0.75"},
         {"state": "collapse", "condition": "stress >= 0.88"},
     ],
     "aisha": [
+        {"state": "energetic", "condition": "true"},
         {"state": "energetic", "condition": "stress < 0.5 and morale > 0.5"},
         {"state": "anxious", "condition": "stress >= 0.5 and stress <= 0.7"},
         {"state": "defensive", "condition": "stress >= 0.7"},
         {"state": "breakdown", "condition": "stress >= 0.88"},
     ],
     "marcus": [
+        {"state": "composed", "condition": "true"},
         {"state": "composed", "condition": "stress < 0.45"},
         {"state": "masking", "condition": "stress >= 0.45 and stress <= 0.65"},
         {"state": "cracking", "condition": "stress >= 0.65"},
         {"state": "crisis", "condition": "stress >= 0.8"},
     ],
     "chen_hao": [
+        {"state": "composed", "condition": "true"},
         {"state": "composed", "condition": "stress < 0.5 and morale > 0.5"},
         {"state": "strained", "condition": "stress >= 0.5 and stress <= 0.7"},
         {"state": "stressed", "condition": "stress >= 0.7"},
@@ -148,6 +155,7 @@ NPC_STATE_MACHINES: Dict[str, List[Dict[str, Any]]] = {
     ],
     "lin_ruoxi": [
         # 蔚蓝 YAML v1.0 — 四档：quiet / withdrawn / breaking / breakdown
+        {"state": "quiet", "condition": "true"},
         {"state": "quiet", "condition": "stress < 0.5 and morale >= 0.35"},
         {"state": "withdrawn", "condition": "stress >= 0.5 and stress <= 0.7"},
         {"state": "breaking", "condition": "stress >= 0.7"},
@@ -237,7 +245,7 @@ class NpcState:
     对应 8d 文档 §1.2 字段定义：
     - stress: 压力值 0.0-1.0（0=无压力 1=崩溃临界）
     - morale: 士气值 0.0-1.0（0=绝望 1=饱满）
-    - trust_in_player: 对玩家信任度 0.0-1.0
+    - trust_in_player: 对玩家信任度 0-100（整数，与 YAML condition 对齐）
     - energy: 体力/精力 0.0-1.0（0=衰竭 1=充沛）
     - current_state: 派生字段，由 state_machine 推导
     - state_machine: 状态阈值转移规则（引用 NPC YAML）
@@ -245,16 +253,16 @@ class NpcState:
 
     stress: float = 0.5
     morale: float = 0.5
-    trust_in_player: float = 0.4
+    trust_in_player: int = 40
     energy: float = 0.7
     current_state: str = "stable"
     state_machine: List[Dict[str, Any]] = field(default_factory=list)
 
     def clamp(self) -> None:
-        """所有数值字段限制在 [0.0, 1.0]（8d 文档 §7.2）"""
+        """数值字段限制在合法范围（8d 文档 §7.2）"""
         self.stress = max(CLAMP_MIN, min(CLAMP_MAX, self.stress))
         self.morale = max(CLAMP_MIN, min(CLAMP_MAX, self.morale))
-        self.trust_in_player = max(CLAMP_MIN, min(CLAMP_MAX, self.trust_in_player))
+        self.trust_in_player = max(TRUST_MIN, min(TRUST_MAX, int(self.trust_in_player)))
         self.energy = max(CLAMP_MIN, min(CLAMP_MAX, self.energy))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -262,7 +270,7 @@ class NpcState:
         return {
             "stress": round(self.stress, 4),
             "morale": round(self.morale, 4),
-            "trust_in_player": round(self.trust_in_player, 4),
+            "trust_in_player": self.trust_in_player,
             "energy": round(self.energy, 4),
             "current_state": self.current_state,
         }
@@ -380,15 +388,14 @@ def apply_effects(
                 game_state.npc_states[nid].morale += delta
                 logger.debug(f"apply_effects: {nid}.morale += {delta}")
 
-    # trust_delta（已有字段，整数 /100 换算到 0-1 浮点）
-    # 8d 文档 §6 行动项 #5 / §5 line 425: trust_in_player += delta / 100.0
+    # trust_delta（整数，直接加到 0-100 trust_in_player）
     for npc_id, delta in effects.get("trust_delta", {}).items():
         apply_list = targets if npc_id == "all" else [npc_id]
         for nid in apply_list:
             if nid in game_state.npc_states:
-                game_state.npc_states[nid].trust_in_player += delta / TRUST_DELTA_DIVISOR
+                game_state.npc_states[nid].trust_in_player += int(delta)
                 logger.debug(
-                    f"apply_effects: {nid}.trust_in_player += {delta}/{TRUST_DELTA_DIVISOR} = {delta / TRUST_DELTA_DIVISOR}"
+                    f"apply_effects: {nid}.trust_in_player += {delta}"
                 )
 
     # 统一 clamp（8d 文档 §5 line 384-385）
@@ -588,10 +595,21 @@ def apply_sol_decay(game_state: GameState) -> None:
     """每 Sol 自然衰减/恢复（8d 文档 §3.3）
 
     在每 Sol（游戏日）开始时统一结算。
+    包括 NPC 心理状态衰减 + 资源按 rate 衰减。
 
     Args:
         game_state: 游戏状态
     """
+    # 1. 资源按 rate 衰减/恢复
+    for res_name, res in game_state.resources.items():
+        rate = res.get("rate", 0)
+        max_val = res.get("max", 100)
+        res["current"] = max(0, min(max_val, res["current"] + rate))
+        logger.debug(
+            f"apply_sol_decay: resource {res_name} {res['current'] - rate:.1f} → {res['current']:.1f} (rate={rate})"
+        )
+
+    # 2. NPC 心理状态衰减
     for npc_id, npc_state in game_state.npc_states.items():
         # 默认衰减（8d 文档 §3.3）
         npc_state.stress += SOL_DECAY_DEFAULTS["stress"]
@@ -678,7 +696,7 @@ def _self_test() -> None:
     print(f"初始 GameState: sol={gs.sol}, signal={gs.signal_quality}, athena={gs.athena_status}")
     for nid, ns in gs.npc_states.items():
         print(f"  {nid}: stress={ns.stress:.2f} morale={ns.morale:.2f} "
-              f"trust={ns.trust_in_player:.2f} energy={ns.energy:.2f} state={ns.current_state}")
+          f"trust={ns.trust_in_player} energy={ns.energy:.2f} state={ns.current_state}")
 
     # 2. 测试 apply_effects（模拟 ev_A1 修复决策）
     print("\n--- 测试 apply_effects ---")
@@ -691,15 +709,15 @@ def _self_test() -> None:
     aisha = gs.npc_states["aisha"]
     viktor = gs.npc_states["viktor"]
     print(f"aisha:  stress={aisha.stress:.3f} morale={aisha.morale:.3f} "
-          f"trust={aisha.trust_in_player:.3f} state={aisha.current_state}")
+          f"trust={aisha.trust_in_player} state={aisha.current_state}")
     print(f"viktor: stress={viktor.stress:.3f} morale={viktor.morale:.3f} "
-          f"trust={viktor.trust_in_player:.3f} state={viktor.current_state}")
+          f"trust={viktor.trust_in_player} state={viktor.current_state}")
 
-    # 验证 trust_delta /100 换算
-    expected_aisha_trust = 0.55 + 10 / 100.0
-    assert abs(aisha.trust_in_player - expected_aisha_trust) < 0.001, \
-        f"trust_delta /100 换算错误: expected {expected_aisha_trust}, got {aisha.trust_in_player}"
-    print(f"✓ trust_delta /100 换算验证通过 (aisha trust = {expected_aisha_trust})")
+    # 验证 trust_delta 直接加（0-100 整数）
+    expected_aisha_trust = 55 + 10
+    assert aisha.trust_in_player == expected_aisha_trust, \
+        f"trust_delta 直接加错误: expected {expected_aisha_trust}, got {aisha.trust_in_player}"
+    print(f"✓ trust_delta 验证通过 (aisha trust = {expected_aisha_trust})")
 
     # 3. 测试 derive_emotion_label
     print("\n--- 测试 derive_emotion_label ---")

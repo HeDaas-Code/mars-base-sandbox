@@ -96,18 +96,17 @@ def _eval_node(node: ast.AST, context: Dict[str, Any]) -> Any:
     """递归求值 AST 节点"""
 
     if isinstance(node, ast.BoolOp):
-        # and / or
-        values = [_eval_node(v, context) for v in node.values]
+        # and / or（短路求值）
         if isinstance(node.op, ast.And):
-            result = True
-            for v in values:
-                result = result and v
-            return result
+            for v in node.values:
+                if not _eval_node(v, context):
+                    return False
+            return True
         elif isinstance(node.op, ast.Or):
-            result = False
-            for v in values:
-                result = result or v
-            return result
+            for v in node.values:
+                if _eval_node(v, context):
+                    return True
+            return False
 
     elif isinstance(node, ast.UnaryOp):
         operand = _eval_node(node.operand, context)
