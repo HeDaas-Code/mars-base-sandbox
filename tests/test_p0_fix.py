@@ -6,7 +6,7 @@ P0 修复验证测试 - C1/C2 集成测试
   C2: compress_context 使用 RemoveMessage 正确删除旧消息
 """
 import sys, os, shutil
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend'))
 
 from langchain_core.messages import HumanMessage, AIMessage, RemoveMessage
 from agent.compress import compress_context

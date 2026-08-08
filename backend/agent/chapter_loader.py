@@ -8,8 +8,8 @@
 4. 永久关键词（permanent_keywords）
 
 YAML 路径（基于本文件位置推导，避免硬编码绝对路径）：
-- <mars-base>/dict/chapters/chapter_<stage>_sol<range>.yaml
-- <mars-base>/dict/events/mainline/branch_<id>_<name>.yaml
+- <project_root>/dict/chapters/chapter_<stage>_sol<range>.yaml
+- <project_root>/dict/events/mainline/branch_<id>_<name>.yaml
 
 作者：锐锋-核心开发工程师  日期：2026-08-03
 """
@@ -30,11 +30,11 @@ logger = logging.getLogger(__name__)
 # 路径常量（基于 __file__ 推导，跨机器可移植）
 # ============================================================
 
-# backend/agent/chapter_loader.py → 向上两级到 mars-base/
-_MARS_BASE_DIR: str = os.path.dirname(
+# backend/agent/chapter_loader.py → 向上两级到项目根目录
+_PROJECT_ROOT: str = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
-DICT_ROOT: str = os.path.join(_MARS_BASE_DIR, "dict")
+DICT_ROOT: str = os.path.join(_PROJECT_ROOT, "dict")
 CHAPTERS_DIR: str = os.path.join(DICT_ROOT, "chapters")
 BRANCHES_DIR: str = os.path.join(DICT_ROOT, "events", "mainline")
 
