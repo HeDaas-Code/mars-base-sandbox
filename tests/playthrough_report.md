@@ -1,6 +1,6 @@
 # 全流程游玩报告
 
-**时间**: 2026-08-08 13:59:12
+**时间**: 2026-08-08 14:03:11
 **总步骤数**: 112
 **问题统计**: 0 ERROR / 0 WARN / 0 INFO
 
@@ -148,23 +148,23 @@
   Step 93 [STATE/Sol推进后 #10]: 
   Step 94 [INPUT/META]: :sol (第 11/15 次)
   Step 95 [OUTPUT/command_response]: ═══ Sol 112 开始 ═══
- 章节: explore  进度: 5/8 触发器已激活
+ 章节: explore  进度: 0/8 触发器已激活
 
   Step 96 [INPUT/META]: :sol (第 12/15 次)
   Step 97 [OUTPUT/command_response]: ═══ Sol 113 开始 ═══
- 章节: explore  进度: 5/8 触发器已激活
+ 章节: explore  进度: 0/8 触发器已激活
 
   Step 98 [INPUT/META]: :sol (第 13/15 次)
   Step 99 [OUTPUT/command_response]: ═══ Sol 114 开始 ═══
- 章节: explore  进度: 5/8 触发器已激活
+ 章节: explore  进度: 0/8 触发器已激活
 
   Step 100 [INPUT/META]: :sol (第 14/15 次)
   Step 101 [OUTPUT/command_response]: ═══ Sol 115 开始 ═══
- 章节: explore  进度: 5/8 触发器已激活
+ 章节: explore  进度: 0/8 触发器已激活
 
   Step 102 [INPUT/META]: :sol (第 15/15 次)
   Step 103 [OUTPUT/command_response]: ═══ Sol 116 开始 ═══
- 章节: explore  进度: 5/8 触发器已激活
+ 章节: explore  进度: 0/8 触发器已激活
 
   Step 104 [STATE/Sol推进后 #15]: 
   Step 105 [INPUT/META]: :skip

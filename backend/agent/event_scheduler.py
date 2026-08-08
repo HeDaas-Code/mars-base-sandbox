@@ -122,6 +122,11 @@ class EventScheduler:
         self.chapter.stage_id = stage_id
         self.chapter.sol = yaml_data.get("sol_range", [1, 10])[0]
         self.chapter.real_sol = yaml_data.get("real_sol_range", [100, 110])[0]
+        # 章节切换时重置运行时状态，避免上一章节的 fired_trigger_ids / active_events 残留
+        # （trigger_id 跨章节唯一，无需跨章节去重；残留会导致进度统计错误，如 explore 显示 5/8）
+        self.chapter.fired_trigger_ids = set()
+        self.chapter.active_events = []
+        self.chapter.current_fsm_node = ""
 
         raw_triggers = extract_triggers(yaml_data)
         self.chapter.triggers = []
