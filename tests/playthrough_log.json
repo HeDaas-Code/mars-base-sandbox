@@ -1,0 +1,3066 @@
+{
+  "entries": [
+    {
+      "step": 1,
+      "timestamp": "2026-08-08T13:50:24.942087",
+      "direction": "INPUT",
+      "type": "INIT",
+      "content": "create_initial_game_state + EventScheduler + GameLoop"
+    },
+    {
+      "step": 2,
+      "timestamp": "2026-08-08T13:50:24.942118",
+      "direction": "STATE",
+      "label": "初始状态",
+      "sol": 1,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.3,
+          "morale": 0.6,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.4,
+          "morale": 0.55,
+          "trust": 0.3,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.5,
+          "morale": 0.5,
+          "trust": 0.3,
+          "state": "stoic"
+        },
+        "aisha": {
+          "stress": 0.45,
+          "morale": 0.55,
+          "trust": 0.6,
+          "state": "energetic"
+        },
+        "marcus": {
+          "stress": 0.35,
+          "morale": 0.65,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "lin_ruoxi": {
+          "stress": 0.4,
+          "morale": 0.45,
+          "trust": 0.3,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 1,
+        "real_sol": 100,
+        "total_triggers": 0,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 3,
+      "timestamp": "2026-08-08T13:50:25.005173",
+      "direction": "INPUT",
+      "type": "START",
+      "content": "gl.start('survival')"
+    },
+    {
+      "step": 4,
+      "timestamp": "2026-08-08T13:50:25.005214",
+      "direction": "STATE",
+      "label": "游戏启动",
+      "sol": 100,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.3,
+          "morale": 0.6,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.4,
+          "morale": 0.55,
+          "trust": 0.3,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.5,
+          "morale": 0.5,
+          "trust": 0.3,
+          "state": "stoic"
+        },
+        "aisha": {
+          "stress": 0.45,
+          "morale": 0.55,
+          "trust": 0.6,
+          "state": "energetic"
+        },
+        "marcus": {
+          "stress": 0.35,
+          "morale": 0.65,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "lin_ruoxi": {
+          "stress": 0.4,
+          "morale": 0.45,
+          "trust": 0.3,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 1,
+        "real_sol": 100,
+        "total_triggers": 7,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 5,
+      "timestamp": "2026-08-08T13:50:25.005222",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":help"
+    },
+    {
+      "step": 6,
+      "timestamp": "2026-08-08T13:50:25.005261",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ meta 命令（以 : 开头）═══\n   :sol          推进一个 Sol（触发事件检查 + 资源衰减）\n   :state        查看基地与成员状态\n   :npc <id>     切换对话目标（chen_hao/sophia/viktor/aisha/marcus/lin_ruoxi）\n   :branch       查看章节进度与触发器\n   :mode <m>     切换响应模式（reflexive/deliberate/deep）\n   :skip         跳过所有待处理事件\n   :restart      重置游戏\n   :help         显示此帮助\n \n═══ 情感指令（前缀，影响 NPC 心理）═══\n   #soothe <text>    安抚（stress-, morale+, trust+）\n   #empathize <text> 共情（trust++）\n   #command <text>   命令（stress+, trust-）\n   #blame <text>     责备（stress++, morale--, trust--）\n   #smalltalk <text> 闲聊（轻微正向）\n \n═══ 自然语言 ═══\n   直接输入文字即与当前 NPC 对话。事件选项通过事件面板点击选择。\n",
+      "raw": {
+        "msg_id": "msg-b09634a5",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ meta 命令（以 : 开头）═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  :sol          推进一个 Sol（触发事件检查 + 资源衰减）\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  :state        查看基地与成员状态\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  :npc <id>     切换对话目标（chen_hao/sophia/viktor/aisha/marcus/lin_ruoxi）\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  :branch       查看章节进度与触发器\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  :mode <m>     切换响应模式（reflexive/deliberate/deep）\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  :skip         跳过所有待处理事件\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  :restart      重置游戏\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  :help         显示此帮助\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "\n═══ 情感指令（前缀，影响 NPC 心理）═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  #soothe <text>    安抚（stress-, morale+, trust+）\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  #empathize <text> 共情（trust++）\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  #command <text>   命令（stress+, trust-）\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  #blame <text>     责备（stress++, morale--, trust--）\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  #smalltalk <text> 闲聊（轻微正向）\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "\n═══ 自然语言 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  直接输入文字即与当前 NPC 对话。事件选项通过事件面板点击选择。\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": null
+        }
+      }
+    },
+    {
+      "step": 7,
+      "timestamp": "2026-08-08T13:50:25.005281",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":state"
+    },
+    {
+      "step": 8,
+      "timestamp": "2026-08-08T13:50:25.005333",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ 基地状态 Sol 100 ═══\n 资源:\n   oxygen: 78/100 (rate -0.3)\n   power: 85/100 (rate 0.5)\n   water: 65/100 (rate -0.1)\n   food: 90/100 (rate -0.5)\n   parts: 12/20 (rate 0)\n 成员:\n   陈昊: 士气0.60 压力0.30 信任0 状态composed\n   索菲亚: 士气0.55 压力0.40 信任0 状态stable\n   维克托: 士气0.50 压力0.50 信任0 状态stoic\n   艾莎: 士气0.55 压力0.45 信任1 状态energetic\n   马库斯: 士气0.65 压力0.35 信任0 状态composed\n   林若曦: 士气0.45 压力0.40 信任0 状态quiet\n 信号质量: 62%  雅典娜: normal\n 章节: survival  待处理事件: 0\n",
+      "raw": {
+        "msg_id": "msg-cd1a2b8e",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ 基地状态 Sol 100 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "资源:\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  oxygen: 78/100 (rate -0.3)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  power: 85/100 (rate 0.5)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  water: 65/100 (rate -0.1)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  food: 90/100 (rate -0.5)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  parts: 12/20 (rate 0)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "成员:\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  陈昊: 士气0.60 压力0.30 信任0 状态composed\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  索菲亚: 士气0.55 压力0.40 信任0 状态stable\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  维克托: 士气0.50 压力0.50 信任0 状态stoic\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  艾莎: 士气0.55 压力0.45 信任1 状态energetic\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  马库斯: 士气0.65 压力0.35 信任0 状态composed\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  林若曦: 士气0.45 压力0.40 信任0 状态quiet\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "信号质量: 62%  雅典娜: normal\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  待处理事件: 0\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 100,
+            "resources": {
+              "oxygen": 78,
+              "power": 85,
+              "water": 65,
+              "food": 90,
+              "parts": 12
+            },
+            "signal_quality": 62
+          }
+        }
+      }
+    },
+    {
+      "step": 9,
+      "timestamp": "2026-08-08T13:50:25.005346",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "陈昊，氧气储备还剩多少？",
+      "extra": {
+        "target": "chen_hao"
+      }
+    },
+    {
+      "step": 10,
+      "timestamp": "2026-08-08T13:50:25.005389",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[CHEN]>  氧气储备还在下降。MOXIE-2 损毁后我们只能靠备用氧气罐撑着——大约还有60个Sol。",
+      "raw": {
+        "msg_id": "msg-mock-25005",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "chen_hao",
+          "sender_label": "CHEN",
+          "segments": [
+            {
+              "text": "[CHEN]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "氧气储备还在下降。MOXIE-2 损毁后我们只能靠备用氧气罐撑着——大约还有60个Sol。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 1127,
+          "emotion_hint": {
+            "stress": 0.3,
+            "morale": 0.6,
+            "emotion_label": "engaged"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 11,
+      "timestamp": "2026-08-08T13:50:25.005404",
+      "direction": "STATE",
+      "label": "对话后",
+      "sol": 100,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.3,
+          "morale": 0.6,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.4,
+          "morale": 0.55,
+          "trust": 0.3,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.5,
+          "morale": 0.5,
+          "trust": 0.3,
+          "state": "stoic"
+        },
+        "aisha": {
+          "stress": 0.45,
+          "morale": 0.55,
+          "trust": 0.6,
+          "state": "energetic"
+        },
+        "marcus": {
+          "stress": 0.35,
+          "morale": 0.65,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "lin_ruoxi": {
+          "stress": 0.4,
+          "morale": 0.45,
+          "trust": 0.3,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 1,
+        "real_sol": 100,
+        "total_triggers": 7,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 12,
+      "timestamp": "2026-08-08T13:50:25.005410",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "#soothe 你做得很好，别给自己太大压力",
+      "extra": {
+        "target": "chen_hao",
+        "emotion": "soothe"
+      }
+    },
+    {
+      "step": 13,
+      "timestamp": "2026-08-08T13:50:25.005608",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[CHEN]>  收到。情况我了解了。现在需要的是行动方案，不是分析。",
+      "raw": {
+        "msg_id": "msg-mock-25005",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "chen_hao",
+          "sender_label": "CHEN",
+          "segments": [
+            {
+              "text": "[CHEN]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "收到。情况我了解了。现在需要的是行动方案，不是分析。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 857,
+          "emotion_hint": {
+            "stress": 0.25,
+            "morale": 0.68,
+            "emotion_label": "engaged"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 14,
+      "timestamp": "2026-08-08T13:50:25.005624",
+      "direction": "STATE",
+      "label": "安抚后",
+      "sol": 100,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.25,
+          "morale": 0.68,
+          "trust": 3.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.4,
+          "morale": 0.55,
+          "trust": 0.3,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.5,
+          "morale": 0.5,
+          "trust": 0.3,
+          "state": "stoic"
+        },
+        "aisha": {
+          "stress": 0.45,
+          "morale": 0.55,
+          "trust": 0.6,
+          "state": "energetic"
+        },
+        "marcus": {
+          "stress": 0.35,
+          "morale": 0.65,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "lin_ruoxi": {
+          "stress": 0.4,
+          "morale": 0.45,
+          "trust": 0.3,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 1,
+        "real_sol": 100,
+        "total_triggers": 7,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 15,
+      "timestamp": "2026-08-08T13:50:25.005629",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "#command 立刻给我一份维修方案",
+      "extra": {
+        "target": "chen_hao",
+        "emotion": "command"
+      }
+    },
+    {
+      "step": 16,
+      "timestamp": "2026-08-08T13:50:25.005750",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[CHEN]>  维修方案我已经在脑子里过了三遍。问题是缺零件。",
+      "raw": {
+        "msg_id": "msg-mock-25005",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "chen_hao",
+          "sender_label": "CHEN",
+          "segments": [
+            {
+              "text": "[CHEN]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "维修方案我已经在脑子里过了三遍。问题是缺零件。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 812,
+          "emotion_hint": {
+            "stress": 0.3,
+            "morale": 0.65,
+            "emotion_label": "engaged"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 17,
+      "timestamp": "2026-08-08T13:50:25.005756",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":npc sophia"
+    },
+    {
+      "step": 18,
+      "timestamp": "2026-08-08T13:50:25.005770",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "已切换到 索菲亚。说点什么？\n",
+      "raw": {
+        "msg_id": "msg-48a8d06c",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "已切换到 索菲亚。说点什么？\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "active_npc": "sophia"
+          }
+        }
+      }
+    },
+    {
+      "step": 19,
+      "timestamp": "2026-08-08T13:50:25.005775",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "水循环系统怎么样？",
+      "extra": {
+        "target": "sophia"
+      }
+    },
+    {
+      "step": 20,
+      "timestamp": "2026-08-08T13:50:25.005791",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[SOPH]>  水循环系统目前运行正常，但回收率只有70%，我需要更多过滤芯。",
+      "raw": {
+        "msg_id": "msg-mock-25005",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "sophia",
+          "sender_label": "SOPH",
+          "segments": [
+            {
+              "text": "[SOPH]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "水循环系统目前运行正常，但回收率只有70%，我需要更多过滤芯。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 1179,
+          "emotion_hint": {
+            "stress": 0.4,
+            "morale": 0.55,
+            "emotion_label": "alert"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 21,
+      "timestamp": "2026-08-08T13:50:25.005796",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "#empathize 我知道你压力很大，但你的工作对大家很重要",
+      "extra": {
+        "target": "sophia",
+        "emotion": "empathize"
+      }
+    },
+    {
+      "step": 22,
+      "timestamp": "2026-08-08T13:50:25.005933",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[SOPH]>  我在实验室里忙着呢。有什么具体问题可以问我。",
+      "raw": {
+        "msg_id": "msg-mock-25005",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "sophia",
+          "sender_label": "SOPH",
+          "segments": [
+            {
+              "text": "[SOPH]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "我在实验室里忙着呢。有什么具体问题可以问我。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 940,
+          "emotion_hint": {
+            "stress": 0.37,
+            "morale": 0.6,
+            "emotion_label": "engaged"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 23,
+      "timestamp": "2026-08-08T13:50:25.005948",
+      "direction": "STATE",
+      "label": "共情后",
+      "sol": 100,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.3,
+          "morale": 0.65,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.37,
+          "morale": 0.6,
+          "trust": 5.3,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.5,
+          "morale": 0.5,
+          "trust": 0.3,
+          "state": "stoic"
+        },
+        "aisha": {
+          "stress": 0.45,
+          "morale": 0.55,
+          "trust": 0.6,
+          "state": "energetic"
+        },
+        "marcus": {
+          "stress": 0.35,
+          "morale": 0.65,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "lin_ruoxi": {
+          "stress": 0.4,
+          "morale": 0.45,
+          "trust": 0.3,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 1,
+        "real_sol": 100,
+        "total_triggers": 7,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 24,
+      "timestamp": "2026-08-08T13:50:25.005952",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":npc viktor"
+    },
+    {
+      "step": 25,
+      "timestamp": "2026-08-08T13:50:25.005963",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "已切换到 维克托。说点什么？\n",
+      "raw": {
+        "msg_id": "msg-eea215dc",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "已切换到 维克托。说点什么？\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "active_npc": "viktor"
+          }
+        }
+      }
+    },
+    {
+      "step": 26,
+      "timestamp": "2026-08-08T13:50:25.005968",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "工程舱的设备能修好吗？",
+      "extra": {
+        "target": "viktor"
+      }
+    },
+    {
+      "step": 27,
+      "timestamp": "2026-08-08T13:50:25.005982",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[VIKT]>  修东西是我的老本行。但零件不够，巧妇难为无米之炊。",
+      "raw": {
+        "msg_id": "msg-mock-25005",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "viktor",
+          "sender_label": "VIKT",
+          "segments": [
+            {
+              "text": "[VIKT]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "修东西是我的老本行。但零件不够，巧妇难为无米之炊。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 925,
+          "emotion_hint": {
+            "stress": 0.5,
+            "morale": 0.5,
+            "emotion_label": "alert"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 28,
+      "timestamp": "2026-08-08T13:50:25.005987",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "#blame 你之前为什么没检查备用系统？",
+      "extra": {
+        "target": "viktor",
+        "emotion": "blame"
+      }
+    },
+    {
+      "step": 29,
+      "timestamp": "2026-08-08T13:50:25.006113",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[VIKT]>  说重点。我不喜欢浪费时间。",
+      "raw": {
+        "msg_id": "msg-mock-25006",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "viktor",
+          "sender_label": "VIKT",
+          "segments": [
+            {
+              "text": "[VIKT]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "说重点。我不喜欢浪费时间。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 914,
+          "emotion_hint": {
+            "stress": 0.58,
+            "morale": 0.42,
+            "emotion_label": "alert"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 30,
+      "timestamp": "2026-08-08T13:50:25.006129",
+      "direction": "STATE",
+      "label": "责备后",
+      "sol": 100,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.3,
+          "morale": 0.65,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.37,
+          "morale": 0.6,
+          "trust": 5.3,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.58,
+          "morale": 0.42,
+          "trust": 0,
+          "state": "stoic"
+        },
+        "aisha": {
+          "stress": 0.45,
+          "morale": 0.55,
+          "trust": 0.6,
+          "state": "energetic"
+        },
+        "marcus": {
+          "stress": 0.35,
+          "morale": 0.65,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "lin_ruoxi": {
+          "stress": 0.4,
+          "morale": 0.45,
+          "trust": 0.3,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 1,
+        "real_sol": 100,
+        "total_triggers": 7,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 31,
+      "timestamp": "2026-08-08T13:50:25.006133",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":npc aisha"
+    },
+    {
+      "step": 32,
+      "timestamp": "2026-08-08T13:50:25.006144",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "已切换到 艾莎。说点什么？\n",
+      "raw": {
+        "msg_id": "msg-97ea08a1",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "已切换到 艾莎。说点什么？\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "active_npc": "aisha"
+          }
+        }
+      }
+    },
+    {
+      "step": 33,
+      "timestamp": "2026-08-08T13:50:25.006149",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "还有可能联系上地球吗？",
+      "extra": {
+        "target": "aisha"
+      }
+    },
+    {
+      "step": 34,
+      "timestamp": "2026-08-08T13:50:25.006173",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[AISH]>  通讯舱这边一切正常。有消息我会第一时间通知。",
+      "raw": {
+        "msg_id": "msg-mock-25006",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "aisha",
+          "sender_label": "AISH",
+          "segments": [
+            {
+              "text": "[AISH]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "通讯舱这边一切正常。有消息我会第一时间通知。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 871,
+          "emotion_hint": {
+            "stress": 0.45,
+            "morale": 0.55,
+            "emotion_label": "alert"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 35,
+      "timestamp": "2026-08-08T13:50:25.006179",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":npc marcus"
+    },
+    {
+      "step": 36,
+      "timestamp": "2026-08-08T13:50:25.006188",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "已切换到 马库斯。说点什么？\n",
+      "raw": {
+        "msg_id": "msg-ef0c1f84",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "已切换到 马库斯。说点什么？\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "active_npc": "marcus"
+          }
+        }
+      }
+    },
+    {
+      "step": 37,
+      "timestamp": "2026-08-08T13:50:25.006192",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "大家的心理状态怎么样？",
+      "extra": {
+        "target": "marcus"
+      }
+    },
+    {
+      "step": 38,
+      "timestamp": "2026-08-08T13:50:25.006204",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[MARC]>  我建议定期进行心理评估。这种环境下，谁都可能出问题。",
+      "raw": {
+        "msg_id": "msg-mock-25006",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "marcus",
+          "sender_label": "MARC",
+          "segments": [
+            {
+              "text": "[MARC]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "我建议定期进行心理评估。这种环境下，谁都可能出问题。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 1177,
+          "emotion_hint": {
+            "stress": 0.35,
+            "morale": 0.65,
+            "emotion_label": "engaged"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 39,
+      "timestamp": "2026-08-08T13:50:25.006210",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":npc lin_ruoxi"
+    },
+    {
+      "step": 40,
+      "timestamp": "2026-08-08T13:50:25.006217",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "已切换到 林若曦。说点什么？\n",
+      "raw": {
+        "msg_id": "msg-7bf711d1",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "已切换到 林若曦。说点什么？\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "active_npc": "lin_ruoxi"
+          }
+        }
+      }
+    },
+    {
+      "step": 41,
+      "timestamp": "2026-08-08T13:50:25.006221",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "那场风暴...你当时有预感吗？",
+      "extra": {
+        "target": "lin_ruoxi"
+      }
+    },
+    {
+      "step": 42,
+      "timestamp": "2026-08-08T13:50:25.006232",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[LIN_]>  那场太阳风暴...我应该在预警阶段就发现异常的。是我的失职。",
+      "raw": {
+        "msg_id": "msg-mock-25006",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "lin_ruoxi",
+          "sender_label": "LIN_",
+          "segments": [
+            {
+              "text": "[LIN_]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "那场太阳风暴...我应该在预警阶段就发现异常的。是我的失职。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 852,
+          "emotion_hint": {
+            "stress": 0.4,
+            "morale": 0.45,
+            "emotion_label": "alert"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 43,
+      "timestamp": "2026-08-08T13:50:25.006237",
+      "direction": "INPUT",
+      "type": "PLAYER_INPUT",
+      "content": "#smalltalk 今天天气不错",
+      "extra": {
+        "target": "lin_ruoxi",
+        "emotion": "smalltalk"
+      }
+    },
+    {
+      "step": 44,
+      "timestamp": "2026-08-08T13:50:25.006355",
+      "direction": "OUTPUT",
+      "type": "agent_message",
+      "content": "[LIN_]>  气象站运行正常。有异常我会报告。",
+      "raw": {
+        "msg_id": "msg-mock-25006",
+        "type": "agent_message",
+        "ts_tick": 1786197025,
+        "payload": {
+          "sender_id": "lin_ruoxi",
+          "sender_label": "LIN_",
+          "segments": [
+            {
+              "text": "[LIN_]> ",
+              "protected": true,
+              "tag": "speaker_label"
+            },
+            {
+              "text": "气象站运行正常。有异常我会报告。",
+              "protected": false,
+              "tag": "speech"
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 1146,
+          "emotion_hint": {
+            "stress": 0.38,
+            "morale": 0.47,
+            "emotion_label": "focused"
+          },
+          "context_summary": {
+            "history_count": 0,
+            "k_limit": 6,
+            "compressed_count": 0,
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 45,
+      "timestamp": "2026-08-08T13:50:25.006360",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":mode reflexive"
+    },
+    {
+      "step": 46,
+      "timestamp": "2026-08-08T13:50:25.006370",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "响应模式 → reflexive\n",
+      "raw": {
+        "msg_id": "msg-50149bdf",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "响应模式 → reflexive\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "mode": "reflexive"
+          }
+        }
+      }
+    },
+    {
+      "step": 47,
+      "timestamp": "2026-08-08T13:50:25.006375",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":mode deep"
+    },
+    {
+      "step": 48,
+      "timestamp": "2026-08-08T13:50:25.006383",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "响应模式 → deep\n",
+      "raw": {
+        "msg_id": "msg-c1bcf1b7",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "响应模式 → deep\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "mode": "deep"
+          }
+        }
+      }
+    },
+    {
+      "step": 49,
+      "timestamp": "2026-08-08T13:50:25.006388",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":mode deliberate"
+    },
+    {
+      "step": 50,
+      "timestamp": "2026-08-08T13:50:25.006394",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "响应模式 → deliberate\n",
+      "raw": {
+        "msg_id": "msg-9286fe12",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "响应模式 → deliberate\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "mode": "deliberate"
+          }
+        }
+      }
+    },
+    {
+      "step": 51,
+      "timestamp": "2026-08-08T13:50:25.006397",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":branch"
+    },
+    {
+      "step": 52,
+      "timestamp": "2026-08-08T13:50:25.006408",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "章节: survival  Sol 1 (real Sol 100)\n 触发器: 0/7 已激活  待处理事件: 0\n",
+      "raw": {
+        "msg_id": "msg-7f99f393",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "章节: survival  Sol 1 (real Sol 100)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "触发器: 0/7 已激活  待处理事件: 0\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "stage_id": "survival",
+            "sol": 1,
+            "real_sol": 100,
+            "total_triggers": 7,
+            "active_triggers": 0,
+            "fired_triggers": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 53,
+      "timestamp": "2026-08-08T13:50:25.006415",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 1/15 次)"
+    },
+    {
+      "step": 54,
+      "timestamp": "2026-08-08T13:50:25.007321",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 101 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-f2b47b6e",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 101 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 101,
+            "stage_id": "survival",
+            "fired_count": 1,
+            "pending_events": 1
+          }
+        },
+        "_followup_story_events": [
+          {
+            "msg_id": "msg-28723e60",
+            "type": "story_event",
+            "ts_tick": 1786197025,
+            "payload": {
+              "event_id": "evt_tr_surv_002_co2_scrubber_proposal",
+              "chapter_id": "survival",
+              "node_index": 2,
+              "title": "事件",
+              "npc": "athena",
+              "description": "雅典娜建议的临时补氧方案：启用 CO2 洗涤器逆向工作模式，预计延长 18 小时，损耗不可逆",
+              "options": [
+                {
+                  "option_id": "opt_0",
+                  "label": "批准",
+                  "visible": true
+                }
+              ],
+              "signal_quality_pct": 62,
+              "latency_ms": 2400
+            }
+          }
+        ]
+      }
+    },
+    {
+      "step": 55,
+      "timestamp": "2026-08-08T13:50:25.007330",
+      "direction": "OUTPUT",
+      "type": "story_event",
+      "content": "雅典娜建议的临时补氧方案：启用 CO2 洗涤器逆向工作模式，预计延长 18 小时，损耗不可逆",
+      "raw": {
+        "msg_id": "msg-28723e60",
+        "type": "story_event",
+        "ts_tick": 1786197025,
+        "payload": {
+          "event_id": "evt_tr_surv_002_co2_scrubber_proposal",
+          "chapter_id": "survival",
+          "node_index": 2,
+          "title": "事件",
+          "npc": "athena",
+          "description": "雅典娜建议的临时补氧方案：启用 CO2 洗涤器逆向工作模式，预计延长 18 小时，损耗不可逆",
+          "options": [
+            {
+              "option_id": "opt_0",
+              "label": "批准",
+              "visible": true
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 2400
+        }
+      }
+    },
+    {
+      "step": 56,
+      "timestamp": "2026-08-08T13:50:25.007345",
+      "direction": "STATE",
+      "label": "Sol推进后(有事件) #1",
+      "sol": 101,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.32,
+          "morale": 0.64,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.39,
+          "morale": 0.59,
+          "trust": 1.0,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.6,
+          "morale": 0.41,
+          "trust": 0.0,
+          "state": "irritated"
+        },
+        "aisha": {
+          "stress": 0.47,
+          "morale": 0.54,
+          "trust": 0.6,
+          "state": "energetic"
+        },
+        "marcus": {
+          "stress": 0.37,
+          "morale": 0.64,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "lin_ruoxi": {
+          "stress": 0.4,
+          "morale": 0.46,
+          "trust": 1.0,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 2,
+        "real_sol": 101,
+        "total_triggers": 7,
+        "active_triggers": 1,
+        "fired_triggers": 0,
+        "pending_events": 1
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 57,
+      "timestamp": "2026-08-08T13:50:25.007351",
+      "direction": "INPUT",
+      "type": "OPTION_SELECT",
+      "content": "event=evt_tr_surv_002_co2_scrubber_proposal, option=opt_0 (批准)"
+    },
+    {
+      "step": 58,
+      "timestamp": "2026-08-08T13:50:25.008722",
+      "direction": "OUTPUT",
+      "type": "option_result",
+      "content": "玩家遭遇的第一个'短期收益 vs 长期损耗'痛苦抉择",
+      "raw": {
+        "msg_id": "msg-61269aa8",
+        "type": "option_result",
+        "ts_tick": 1786197025,
+        "payload": {
+          "event_id": "evt_tr_surv_002_co2_scrubber_proposal",
+          "option_id": "opt_0",
+          "selected_option_id": "opt_0",
+          "effects_summary": "玩家遭遇的第一个'短期收益 vs 长期损耗'痛苦抉择",
+          "state_update": [],
+          "signal_quality_pct": 62
+        }
+      }
+    },
+    {
+      "step": 59,
+      "timestamp": "2026-08-08T13:50:25.008735",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 2/15 次)"
+    },
+    {
+      "step": 60,
+      "timestamp": "2026-08-08T13:50:25.009665",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 102 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-687ce056",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 102 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 102,
+            "stage_id": "survival",
+            "fired_count": 1,
+            "pending_events": 1
+          }
+        },
+        "_followup_story_events": [
+          {
+            "msg_id": "msg-8478516a",
+            "type": "story_event",
+            "ts_tick": 1786197025,
+            "payload": {
+              "event_id": "evt_tr_surv_005_marcus_sleep_anomaly",
+              "chapter_id": "survival",
+              "node_index": 3,
+              "title": "事件",
+              "npc": "athena",
+              "description": "信使报告马库斯·韦伯睡眠质量评分 2.1/5（连续 3 日偏低），隐瞒的幽闭恐惧症恶化信号",
+              "options": [
+                {
+                  "option_id": "opt_0",
+                  "label": "确认",
+                  "visible": true
+                }
+              ],
+              "signal_quality_pct": 62,
+              "latency_ms": 2400
+            }
+          }
+        ]
+      }
+    },
+    {
+      "step": 61,
+      "timestamp": "2026-08-08T13:50:25.009676",
+      "direction": "OUTPUT",
+      "type": "story_event",
+      "content": "信使报告马库斯·韦伯睡眠质量评分 2.1/5（连续 3 日偏低），隐瞒的幽闭恐惧症恶化信号",
+      "raw": {
+        "msg_id": "msg-8478516a",
+        "type": "story_event",
+        "ts_tick": 1786197025,
+        "payload": {
+          "event_id": "evt_tr_surv_005_marcus_sleep_anomaly",
+          "chapter_id": "survival",
+          "node_index": 3,
+          "title": "事件",
+          "npc": "athena",
+          "description": "信使报告马库斯·韦伯睡眠质量评分 2.1/5（连续 3 日偏低），隐瞒的幽闭恐惧症恶化信号",
+          "options": [
+            {
+              "option_id": "opt_0",
+              "label": "确认",
+              "visible": true
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 2400
+        }
+      }
+    },
+    {
+      "step": 62,
+      "timestamp": "2026-08-08T13:50:25.009693",
+      "direction": "STATE",
+      "label": "Sol推进后(有事件) #2",
+      "sol": 102,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.34,
+          "morale": 0.0,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.41,
+          "morale": 0.58,
+          "trust": 1.0,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.62,
+          "morale": 0.4,
+          "trust": 0.0,
+          "state": "irritated"
+        },
+        "aisha": {
+          "stress": 0.49,
+          "morale": 0.53,
+          "trust": 0.6,
+          "state": "energetic"
+        },
+        "marcus": {
+          "stress": 0.39,
+          "morale": 0.63,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "lin_ruoxi": {
+          "stress": 0.42,
+          "morale": 0.45,
+          "trust": 1.0,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 3,
+        "real_sol": 102,
+        "total_triggers": 7,
+        "active_triggers": 1,
+        "fired_triggers": 0,
+        "pending_events": 1
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 63,
+      "timestamp": "2026-08-08T13:50:25.009699",
+      "direction": "INPUT",
+      "type": "OPTION_SELECT",
+      "content": "event=evt_tr_surv_005_marcus_sleep_anomaly, option=opt_0 (确认)"
+    },
+    {
+      "step": 64,
+      "timestamp": "2026-08-08T13:50:25.009733",
+      "direction": "OUTPUT",
+      "type": "option_result",
+      "content": "已选择: 确认",
+      "raw": {
+        "msg_id": "msg-67e32a2e",
+        "type": "option_result",
+        "ts_tick": 1786197025,
+        "payload": {
+          "event_id": "evt_tr_surv_005_marcus_sleep_anomaly",
+          "option_id": "opt_0",
+          "selected_option_id": "opt_0",
+          "effects_summary": "已选择: 确认",
+          "state_update": [],
+          "signal_quality_pct": 62
+        }
+      }
+    },
+    {
+      "step": 65,
+      "timestamp": "2026-08-08T13:50:25.009738",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 3/15 次)"
+    },
+    {
+      "step": 66,
+      "timestamp": "2026-08-08T13:50:25.010552",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 103 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-882ed3ff",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 103 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 103,
+            "stage_id": "survival",
+            "fired_count": 1,
+            "pending_events": 1
+          }
+        },
+        "_followup_story_events": [
+          {
+            "msg_id": "msg-fcc2bb95",
+            "type": "story_event",
+            "ts_tick": 1786197025,
+            "payload": {
+              "event_id": "evt_tr_surv_006_linruoxi_silence",
+              "chapter_id": "survival",
+              "node_index": 4,
+              "title": "事件",
+              "npc": "athena",
+              "description": "林若曦最早察觉到太阳风暴前兆却未能说服团队及时预警，深陷自责；表现为社交退缩、消息稀少",
+              "options": [
+                {
+                  "option_id": "opt_0",
+                  "label": "确认",
+                  "visible": true
+                }
+              ],
+              "signal_quality_pct": 62,
+              "latency_ms": 2400
+            }
+          }
+        ]
+      }
+    },
+    {
+      "step": 67,
+      "timestamp": "2026-08-08T13:50:25.010561",
+      "direction": "OUTPUT",
+      "type": "story_event",
+      "content": "林若曦最早察觉到太阳风暴前兆却未能说服团队及时预警，深陷自责；表现为社交退缩、消息稀少",
+      "raw": {
+        "msg_id": "msg-fcc2bb95",
+        "type": "story_event",
+        "ts_tick": 1786197025,
+        "payload": {
+          "event_id": "evt_tr_surv_006_linruoxi_silence",
+          "chapter_id": "survival",
+          "node_index": 4,
+          "title": "事件",
+          "npc": "athena",
+          "description": "林若曦最早察觉到太阳风暴前兆却未能说服团队及时预警，深陷自责；表现为社交退缩、消息稀少",
+          "options": [
+            {
+              "option_id": "opt_0",
+              "label": "确认",
+              "visible": true
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 2400
+        }
+      }
+    },
+    {
+      "step": 68,
+      "timestamp": "2026-08-08T13:50:25.010590",
+      "direction": "STATE",
+      "label": "Sol推进后(有事件) #3",
+      "sol": 103,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.36,
+          "morale": 0.0,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.43,
+          "morale": 0.57,
+          "trust": 1.0,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.64,
+          "morale": 0.39,
+          "trust": 0.0,
+          "state": "irritated"
+        },
+        "aisha": {
+          "stress": 0.51,
+          "morale": 0.52,
+          "trust": 0.6,
+          "state": "anxious"
+        },
+        "marcus": {
+          "stress": 0.41,
+          "morale": 0.62,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "lin_ruoxi": {
+          "stress": 0.44,
+          "morale": 0.44,
+          "trust": 1.0,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 4,
+        "real_sol": 103,
+        "total_triggers": 7,
+        "active_triggers": 1,
+        "fired_triggers": 0,
+        "pending_events": 1
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 69,
+      "timestamp": "2026-08-08T13:50:25.010596",
+      "direction": "INPUT",
+      "type": "OPTION_SELECT",
+      "content": "event=evt_tr_surv_006_linruoxi_silence, option=opt_0 (确认)"
+    },
+    {
+      "step": 70,
+      "timestamp": "2026-08-08T13:50:25.010625",
+      "direction": "OUTPUT",
+      "type": "option_result",
+      "content": "已选择: 确认",
+      "raw": {
+        "msg_id": "msg-c0ceca96",
+        "type": "option_result",
+        "ts_tick": 1786197025,
+        "payload": {
+          "event_id": "evt_tr_surv_006_linruoxi_silence",
+          "option_id": "opt_0",
+          "selected_option_id": "opt_0",
+          "effects_summary": "已选择: 确认",
+          "state_update": [],
+          "signal_quality_pct": 62
+        }
+      }
+    },
+    {
+      "step": 71,
+      "timestamp": "2026-08-08T13:50:25.010630",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 4/15 次)"
+    },
+    {
+      "step": 72,
+      "timestamp": "2026-08-08T13:50:25.011598",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 104 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-7afe1939",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 104 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 104,
+            "stage_id": "survival",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 73,
+      "timestamp": "2026-08-08T13:50:25.011612",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 5/15 次)"
+    },
+    {
+      "step": 74,
+      "timestamp": "2026-08-08T13:50:25.012412",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 105 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-74f62274",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 105 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 105,
+            "stage_id": "survival",
+            "fired_count": 1,
+            "pending_events": 1
+          }
+        },
+        "_followup_story_events": [
+          {
+            "msg_id": "msg-ff8e75a7",
+            "type": "story_event",
+            "ts_tick": 1786197025,
+            "payload": {
+              "event_id": "evt_tr_surv_007_minor_dust_storm",
+              "chapter_id": "survival",
+              "node_index": 6,
+              "title": "事件",
+              "npc": "athena",
+              "description": "小型沙尘暴过境，信号强度 -20%，地表作业暂停",
+              "options": [
+                {
+                  "option_id": "opt_0",
+                  "label": "确认",
+                  "visible": true
+                }
+              ],
+              "signal_quality_pct": 62,
+              "latency_ms": 2400
+            }
+          }
+        ]
+      }
+    },
+    {
+      "step": 75,
+      "timestamp": "2026-08-08T13:50:25.012422",
+      "direction": "OUTPUT",
+      "type": "story_event",
+      "content": "小型沙尘暴过境，信号强度 -20%，地表作业暂停",
+      "raw": {
+        "msg_id": "msg-ff8e75a7",
+        "type": "story_event",
+        "ts_tick": 1786197025,
+        "payload": {
+          "event_id": "evt_tr_surv_007_minor_dust_storm",
+          "chapter_id": "survival",
+          "node_index": 6,
+          "title": "事件",
+          "npc": "athena",
+          "description": "小型沙尘暴过境，信号强度 -20%，地表作业暂停",
+          "options": [
+            {
+              "option_id": "opt_0",
+              "label": "确认",
+              "visible": true
+            }
+          ],
+          "signal_quality_pct": 62,
+          "latency_ms": 2400
+        }
+      }
+    },
+    {
+      "step": 76,
+      "timestamp": "2026-08-08T13:50:25.012438",
+      "direction": "STATE",
+      "label": "Sol推进后(有事件) #5",
+      "sol": 105,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.4,
+          "morale": 0.0,
+          "trust": 0.4,
+          "state": "composed"
+        },
+        "sophia": {
+          "stress": 0.47,
+          "morale": 0.55,
+          "trust": 1.0,
+          "state": "stable"
+        },
+        "viktor": {
+          "stress": 0.68,
+          "morale": 0.37,
+          "trust": 0.0,
+          "state": "irritated"
+        },
+        "aisha": {
+          "stress": 0.55,
+          "morale": 0.5,
+          "trust": 0.6,
+          "state": "anxious"
+        },
+        "marcus": {
+          "stress": 0.45,
+          "morale": 0.6,
+          "trust": 0.4,
+          "state": "masking"
+        },
+        "lin_ruoxi": {
+          "stress": 0.48,
+          "morale": 0.42,
+          "trust": 1.0,
+          "state": "quiet"
+        }
+      },
+      "chapter": {
+        "stage_id": "survival",
+        "sol": 6,
+        "real_sol": 105,
+        "total_triggers": 7,
+        "active_triggers": 1,
+        "fired_triggers": 0,
+        "pending_events": 1
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 77,
+      "timestamp": "2026-08-08T13:50:25.012444",
+      "direction": "INPUT",
+      "type": "OPTION_SELECT",
+      "content": "event=evt_tr_surv_007_minor_dust_storm, option=opt_0 (确认)"
+    },
+    {
+      "step": 78,
+      "timestamp": "2026-08-08T13:50:25.012475",
+      "direction": "OUTPUT",
+      "type": "option_result",
+      "content": "已选择: 确认",
+      "raw": {
+        "msg_id": "msg-d839a708",
+        "type": "option_result",
+        "ts_tick": 1786197025,
+        "payload": {
+          "event_id": "evt_tr_surv_007_minor_dust_storm",
+          "option_id": "opt_0",
+          "selected_option_id": "opt_0",
+          "effects_summary": "已选择: 确认",
+          "state_update": [],
+          "signal_quality_pct": 62
+        }
+      }
+    },
+    {
+      "step": 79,
+      "timestamp": "2026-08-08T13:50:25.012480",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 6/15 次)"
+    },
+    {
+      "step": 80,
+      "timestamp": "2026-08-08T13:50:25.013187",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 106 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-3796f921",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 106 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 106,
+            "stage_id": "survival",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 81,
+      "timestamp": "2026-08-08T13:50:25.013197",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 7/15 次)"
+    },
+    {
+      "step": 82,
+      "timestamp": "2026-08-08T13:50:25.013855",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 107 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-00c5737e",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 107 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 107,
+            "stage_id": "survival",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 83,
+      "timestamp": "2026-08-08T13:50:25.013863",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 8/15 次)"
+    },
+    {
+      "step": 84,
+      "timestamp": "2026-08-08T13:50:25.014632",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 108 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-0708d3d8",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 108 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 108,
+            "stage_id": "survival",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 85,
+      "timestamp": "2026-08-08T13:50:25.014642",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 9/15 次)"
+    },
+    {
+      "step": 86,
+      "timestamp": "2026-08-08T13:50:25.015301",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 109 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-291ff1d0",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 109 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 109,
+            "stage_id": "survival",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 87,
+      "timestamp": "2026-08-08T13:50:25.015310",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 10/15 次)"
+    },
+    {
+      "step": 88,
+      "timestamp": "2026-08-08T13:50:25.050485",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 110 开始 ═══\n 章节: survival  进度: 0/7 触发器已激活\n \n▶ 章节切换: → explore\n",
+      "raw": {
+        "msg_id": "msg-25d5171b",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 110 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: survival  进度: 0/7 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "\n▶ 章节切换: → explore\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 111,
+            "stage_id": "explore",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 89,
+      "timestamp": "2026-08-08T13:50:25.050526",
+      "direction": "STATE",
+      "label": "Sol推进后 #10",
+      "sol": 111,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.5,
+          "morale": 0.0,
+          "trust": 0.4,
+          "state": "strained"
+        },
+        "sophia": {
+          "stress": 0.57,
+          "morale": 0.5,
+          "trust": 1.0,
+          "state": "strained"
+        },
+        "viktor": {
+          "stress": 0.78,
+          "morale": 0.32,
+          "trust": 0.0,
+          "state": "defiant"
+        },
+        "aisha": {
+          "stress": 0.65,
+          "morale": 0.45,
+          "trust": 0.6,
+          "state": "anxious"
+        },
+        "marcus": {
+          "stress": 0.55,
+          "morale": 0.55,
+          "trust": 0.4,
+          "state": "masking"
+        },
+        "lin_ruoxi": {
+          "stress": 0.58,
+          "morale": 0.37,
+          "trust": 1.0,
+          "state": "withdrawn"
+        }
+      },
+      "chapter": {
+        "stage_id": "explore",
+        "sol": 11,
+        "real_sol": 111,
+        "total_triggers": 8,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 90,
+      "timestamp": "2026-08-08T13:50:25.050533",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 11/15 次)"
+    },
+    {
+      "step": 91,
+      "timestamp": "2026-08-08T13:50:25.051653",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 112 开始 ═══\n 章节: explore  进度: 0/8 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-29a07ca8",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 112 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: explore  进度: 0/8 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 112,
+            "stage_id": "explore",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 92,
+      "timestamp": "2026-08-08T13:50:25.051666",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 12/15 次)"
+    },
+    {
+      "step": 93,
+      "timestamp": "2026-08-08T13:50:25.052565",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 113 开始 ═══\n 章节: explore  进度: 0/8 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-00bf4aa0",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 113 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: explore  进度: 0/8 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 113,
+            "stage_id": "explore",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 94,
+      "timestamp": "2026-08-08T13:50:25.052577",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 13/15 次)"
+    },
+    {
+      "step": 95,
+      "timestamp": "2026-08-08T13:50:25.053436",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 114 开始 ═══\n 章节: explore  进度: 0/8 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-204f2cc9",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 114 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: explore  进度: 0/8 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 114,
+            "stage_id": "explore",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 96,
+      "timestamp": "2026-08-08T13:50:25.053447",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 14/15 次)"
+    },
+    {
+      "step": 97,
+      "timestamp": "2026-08-08T13:50:25.054296",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 115 开始 ═══\n 章节: explore  进度: 0/8 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-8766c1a3",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 115 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: explore  进度: 0/8 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 115,
+            "stage_id": "explore",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 98,
+      "timestamp": "2026-08-08T13:50:25.054305",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":sol (第 15/15 次)"
+    },
+    {
+      "step": 99,
+      "timestamp": "2026-08-08T13:50:25.055133",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ Sol 116 开始 ═══\n 章节: explore  进度: 0/8 触发器已激活\n",
+      "raw": {
+        "msg_id": "msg-9409990a",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ Sol 116 开始 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: explore  进度: 0/8 触发器已激活\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 116,
+            "stage_id": "explore",
+            "fired_count": 0,
+            "pending_events": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 100,
+      "timestamp": "2026-08-08T13:50:25.055163",
+      "direction": "STATE",
+      "label": "Sol推进后 #15",
+      "sol": 116,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.6,
+          "morale": 0.0,
+          "trust": 0.4,
+          "state": "strained"
+        },
+        "sophia": {
+          "stress": 0.67,
+          "morale": 0.45,
+          "trust": 1.0,
+          "state": "strained"
+        },
+        "viktor": {
+          "stress": 0.88,
+          "morale": 0.27,
+          "trust": 0.0,
+          "state": "collapse"
+        },
+        "aisha": {
+          "stress": 0.75,
+          "morale": 0.4,
+          "trust": 0.6,
+          "state": "defensive"
+        },
+        "marcus": {
+          "stress": 0.65,
+          "morale": 0.5,
+          "trust": 0.4,
+          "state": "cracking"
+        },
+        "lin_ruoxi": {
+          "stress": 0.68,
+          "morale": 0.32,
+          "trust": 1.0,
+          "state": "withdrawn"
+        }
+      },
+      "chapter": {
+        "stage_id": "explore",
+        "sol": 16,
+        "real_sol": 116,
+        "total_triggers": 8,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 101,
+      "timestamp": "2026-08-08T13:50:25.055170",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":skip"
+    },
+    {
+      "step": 102,
+      "timestamp": "2026-08-08T13:50:25.055185",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "已跳过 0 个待处理事件。\n",
+      "raw": {
+        "msg_id": "msg-5bf6a566",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "已跳过 0 个待处理事件。\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "skipped": 0
+          }
+        }
+      }
+    },
+    {
+      "step": 103,
+      "timestamp": "2026-08-08T13:50:25.055190",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":state (最终)"
+    },
+    {
+      "step": 104,
+      "timestamp": "2026-08-08T13:50:25.055227",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "═══ 基地状态 Sol 116 ═══\n 资源:\n   oxygen: 78/100 (rate -0.3)\n   power: 85/100 (rate 0.5)\n   water: 65/100 (rate -0.1)\n   food: 90/100 (rate -0.5)\n   parts: 12/20 (rate 0)\n 成员:\n   陈昊: 士气0.00 压力0.60 信任0 状态strained\n   索菲亚: 士气0.45 压力0.67 信任1 状态strained\n   维克托: 士气0.27 压力0.88 信任0 状态collapse\n   艾莎: 士气0.40 压力0.75 信任1 状态defensive\n   马库斯: 士气0.50 压力0.65 信任0 状态cracking\n   林若曦: 士气0.32 压力0.68 信任1 状态withdrawn\n 信号质量: 62%  雅典娜: normal\n 章节: explore  待处理事件: 0\n",
+      "raw": {
+        "msg_id": "msg-9da69ef4",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "═══ 基地状态 Sol 116 ═══\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "资源:\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  oxygen: 78/100 (rate -0.3)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  power: 85/100 (rate 0.5)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  water: 65/100 (rate -0.1)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  food: 90/100 (rate -0.5)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  parts: 12/20 (rate 0)\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "成员:\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  陈昊: 士气0.00 压力0.60 信任0 状态strained\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  索菲亚: 士气0.45 压力0.67 信任1 状态strained\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  维克托: 士气0.27 压力0.88 信任0 状态collapse\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  艾莎: 士气0.40 压力0.75 信任1 状态defensive\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  马库斯: 士气0.50 压力0.65 信任0 状态cracking\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "  林若曦: 士气0.32 压力0.68 信任1 状态withdrawn\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "信号质量: 62%  雅典娜: normal\n",
+              "protected": true,
+              "tag": "command_response"
+            },
+            {
+              "text": "章节: explore  待处理事件: 0\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 116,
+            "resources": {
+              "oxygen": 78,
+              "power": 85,
+              "water": 65,
+              "food": 90,
+              "parts": 12
+            },
+            "signal_quality": 62
+          }
+        }
+      }
+    },
+    {
+      "step": 105,
+      "timestamp": "2026-08-08T13:50:25.055246",
+      "direction": "STATE",
+      "label": "最终状态",
+      "sol": 116,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.6,
+          "morale": 0.0,
+          "trust": 0.4,
+          "state": "strained"
+        },
+        "sophia": {
+          "stress": 0.67,
+          "morale": 0.45,
+          "trust": 1.0,
+          "state": "strained"
+        },
+        "viktor": {
+          "stress": 0.88,
+          "morale": 0.27,
+          "trust": 0.0,
+          "state": "collapse"
+        },
+        "aisha": {
+          "stress": 0.75,
+          "morale": 0.4,
+          "trust": 0.6,
+          "state": "defensive"
+        },
+        "marcus": {
+          "stress": 0.65,
+          "morale": 0.5,
+          "trust": 0.4,
+          "state": "cracking"
+        },
+        "lin_ruoxi": {
+          "stress": 0.68,
+          "morale": 0.32,
+          "trust": 1.0,
+          "state": "withdrawn"
+        }
+      },
+      "chapter": {
+        "stage_id": "explore",
+        "sol": 16,
+        "real_sol": 116,
+        "total_triggers": 8,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    },
+    {
+      "step": 106,
+      "timestamp": "2026-08-08T13:50:25.055250",
+      "direction": "INPUT",
+      "type": "META",
+      "content": ":restart"
+    },
+    {
+      "step": 107,
+      "timestamp": "2026-08-08T13:50:25.055893",
+      "direction": "OUTPUT",
+      "type": "command_response",
+      "content": "◆ 游戏已重置，进入 Sol 100 survival 章节 ◆\n",
+      "raw": {
+        "msg_id": "msg-a9ecaf9e",
+        "type": "command_response",
+        "ts_tick": 1786197025,
+        "payload": {
+          "output_segments": [
+            {
+              "text": "◆ 游戏已重置，进入 Sol 100 survival 章节 ◆\n",
+              "protected": true,
+              "tag": "command_response"
+            }
+          ],
+          "data": {
+            "sol": 100
+          }
+        }
+      }
+    },
+    {
+      "step": 108,
+      "timestamp": "2026-08-08T13:50:25.055910",
+      "direction": "STATE",
+      "label": "重启后",
+      "sol": 116,
+      "resources": {
+        "oxygen": 78,
+        "power": 85,
+        "water": 65,
+        "food": 90,
+        "parts": 12
+      },
+      "npcs": {
+        "chen_hao": {
+          "stress": 0.6,
+          "morale": 0.0,
+          "trust": 0.4,
+          "state": "strained"
+        },
+        "sophia": {
+          "stress": 0.67,
+          "morale": 0.45,
+          "trust": 1.0,
+          "state": "strained"
+        },
+        "viktor": {
+          "stress": 0.88,
+          "morale": 0.27,
+          "trust": 0.0,
+          "state": "collapse"
+        },
+        "aisha": {
+          "stress": 0.75,
+          "morale": 0.4,
+          "trust": 0.6,
+          "state": "defensive"
+        },
+        "marcus": {
+          "stress": 0.65,
+          "morale": 0.5,
+          "trust": 0.4,
+          "state": "cracking"
+        },
+        "lin_ruoxi": {
+          "stress": 0.68,
+          "morale": 0.32,
+          "trust": 1.0,
+          "state": "withdrawn"
+        }
+      },
+      "chapter": {
+        "stage_id": "explore",
+        "sol": 16,
+        "real_sol": 116,
+        "total_triggers": 8,
+        "active_triggers": 0,
+        "fired_triggers": 0,
+        "pending_events": 0
+      },
+      "athena": "normal",
+      "signal": 62
+    }
+  ],
+  "issues": []
+}
