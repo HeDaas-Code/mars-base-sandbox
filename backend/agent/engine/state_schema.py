@@ -239,3 +239,156 @@ class ResourceSchema:
 
     def __len__(self) -> int:
         return len(self._defs)
+
+
+# ============================================================
+# NPC schema（题材包动态注册 NPC 初始状态 + 状态机）
+# ============================================================
+
+@dataclass
+class NpcDef:
+    """NPC 定义（初始状态 + 状态机）"""
+    npc_id: str
+    initial_state: Dict[str, Any]            # stress/morale/trust_in_player/energy
+    state_machine: List[Dict[str, Any]] = field(default_factory=list)
+    source: str = "yaml"                     # yaml / hardcoded / default
+
+
+class NpcSchema:
+    """NPC 定义注册表
+
+    将 game_state.py 中硬编码的 NPC_INITIAL_STATES / NPC_STATE_MACHINES
+    升级为可动态注册的 schema，题材包通过 NPC YAML 的 psychology 字段声明。
+
+    用法：
+        schema = NpcSchema()
+        schema.register_from_yaml("sophia", npc_data)  # 从 NPC YAML 加载
+        npc_states = schema.init_npc_states()           # 创建 NpcState 字典
+
+    量纲处理：
+        YAML 中 trust_in_player 是 0-1 浮点（如 0.35）
+        NpcState.trust_in_player 是 0-100 整数
+        register_from_yaml 自动转换：int(trust * 100)
+    """
+
+    # 默认初始状态（NPC YAML 缺失 psychology 时的回退值）
+    DEFAULT_INITIAL_STATE: Dict[str, Any] = {
+        "stress": 0.5,
+        "morale": 0.5,
+        "trust_in_player": 40,    # 已是 0-100 整数量纲
+        "energy": 0.7,
+    }
+
+    # 默认状态机（通用四档：stable / strained / cracking / breakdown）
+    DEFAULT_STATE_MACHINE: List[Dict[str, Any]] = [
+        {"state": "stable", "condition": "true"},
+        {"state": "stable", "condition": "stress < 0.5 and morale > 0.4"},
+        {"state": "strained", "condition": "stress >= 0.5 and stress <= 0.7"},
+        {"state": "cracking", "condition": "stress >= 0.7 or morale < 0.3"},
+        {"state": "breakdown", "condition": "stress >= 0.85"},
+    ]
+
+    def __init__(self) -> None:
+        self._defs: Dict[str, NpcDef] = {}
+
+    def register(
+        self,
+        npc_id: str,
+        initial_state: Optional[Dict[str, Any]] = None,
+        state_machine: Optional[List[Dict[str, Any]]] = None,
+        source: str = "custom",
+    ) -> None:
+        """注册一个 NPC 定义"""
+        self._defs[npc_id] = NpcDef(
+            npc_id=npc_id,
+            initial_state=initial_state or dict(self.DEFAULT_INITIAL_STATE),
+            state_machine=state_machine or list(self.DEFAULT_STATE_MACHINE),
+            source=source,
+        )
+        logger.debug(f"NpcSchema 注册: {npc_id} (source={source})")
+
+    def register_from_yaml(self, npc_id: str, npc_data: Dict[str, Any]) -> bool:
+        """从 NPC YAML 数据注册 NPC 定义
+
+        从 npc_data["psychology"]["initial_state"] 和
+        npc_data["psychology"]["state_machine"] 提取。
+
+        量纲转换：
+            YAML trust_in_player (0-1 浮点) → NpcState (0-100 整数)
+
+        Returns:
+            True 注册成功，False（YAML 无 psychology 字段，用默认值注册）
+        """
+        canonical_id = npc_data.get("npc_id", npc_id)
+        psychology = npc_data.get("psychology", {}) or {}
+        initial_state = dict(self.DEFAULT_INITIAL_STATE)
+        state_machine = list(self.DEFAULT_STATE_MACHINE)
+        has_psychology = False
+
+        if psychology:
+            yaml_initial = psychology.get("initial_state", {})
+            if yaml_initial:
+                has_psychology = True
+                # 量纲转换：trust_in_player 0-1 → 0-100
+                initial_state["stress"] = float(yaml_initial.get("stress", 0.5))
+                initial_state["morale"] = float(yaml_initial.get("morale", 0.5))
+                initial_state["energy"] = float(yaml_initial.get("energy", 0.7))
+                trust = yaml_initial.get("trust_in_player", 0.4)
+                if isinstance(trust, (int, float)) and trust <= 1.0:
+                    initial_state["trust_in_player"] = int(trust * 100)
+                else:
+                    initial_state["trust_in_player"] = int(trust)
+
+            yaml_sm = psychology.get("state_machine", [])
+            if yaml_sm:
+                state_machine = yaml_sm
+
+        self.register(
+            npc_id=canonical_id,
+            initial_state=initial_state,
+            state_machine=state_machine,
+            source="yaml" if has_psychology else "default",
+        )
+        return has_psychology
+
+    def init_npc_states(self) -> Dict[str, Any]:
+        """初始化所有已注册 NPC 的 NpcState 字典
+
+        Returns:
+            {npc_id: NpcState} 字典
+        """
+        # 延迟导入避免循环依赖
+        from ..game_state import NpcState, derive_current_state
+
+        result: Dict[str, Any] = {}
+        for npc_id, ndef in self._defs.items():
+            init = ndef.initial_state
+            npc_state = NpcState(
+                stress=float(init.get("stress", 0.5)),
+                morale=float(init.get("morale", 0.5)),
+                trust_in_player=int(init.get("trust_in_player", 40)),
+                energy=float(init.get("energy", 0.7)),
+                current_state="stable",
+                state_machine=ndef.state_machine,
+            )
+            npc_state.clamp()
+            derive_current_state(npc_state)
+            result[npc_id] = npc_state
+        return result
+
+    def get_def(self, npc_id: str) -> Optional[NpcDef]:
+        return self._defs.get(npc_id)
+
+    def list_npcs(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "npc_id": d.npc_id,
+                "initial_state": d.initial_state,
+                "source": d.source,
+                "state_machine_size": len(d.state_machine),
+            }
+            for d in self._defs.values()
+        ]
+
+    def __len__(self) -> int:
+        return len(self._defs)

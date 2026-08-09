@@ -338,12 +338,22 @@ class GameState:
 # GameState 初始化
 # ============================================================
 
-def create_initial_game_state() -> GameState:
+def create_initial_game_state(npc_schema=None) -> GameState:
     """创建初始游戏状态
 
-    从 NPC_INITIAL_STATES 和 NPC_STATE_MACHINES 初始化所有 NPC 状态。
+    Args:
+        npc_schema: 可选的 NpcSchema 实例（Phase 4 引擎化）。
+            提供时按 schema 动态创建 NPC；缺省时回退到硬编码
+            NPC_INITIAL_STATES / NPC_STATE_MACHINES（向后兼容）。
     """
     game_state = GameState()
+
+    # Phase 4 引擎化：优先用 NpcSchema 动态创建 NPC
+    if npc_schema is not None and len(npc_schema) > 0:
+        game_state.npc_states = npc_schema.init_npc_states()
+        return game_state
+
+    # 回退：硬编码 NPC_INITIAL_STATES（向后兼容）
     for npc_id, initial in NPC_INITIAL_STATES.items():
         npc_state = NpcState(
             stress=initial["stress"],
@@ -495,7 +505,9 @@ def _eval_condition(condition: str, variables: Dict[str, Any]) -> bool:
     try:
         result = evaluate_condition(condition, variables)
         return bool(result)
-    except (ValueError, SyntaxError) as e:
+    except (ValueError, SyntaxError, TypeError) as e:
+        # TypeError 通常来自未知变量与数值比较（如 claustrophobia_severity >= 0.4
+        # 中 claustrophobia_severity 未在 eval_vars 中，被 condition.py 当作字符串）
         logger.warning(f"_eval_condition: eval failed for '{condition}': {e}")
         return False
 

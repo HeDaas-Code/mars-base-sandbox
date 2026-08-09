@@ -23,7 +23,7 @@ from ..game_loop import GameLoop
 from .ending_registry import EndingRegistry, create_default_ending_registry
 from .command_registry import CommandRegistry
 from .persona_registry import PersonaRegistry, create_default_persona_registry
-from .state_schema import StateSchema, ResourceSchema
+from .state_schema import StateSchema, ResourceSchema, NpcSchema
 from .data_loader import DataLoader, ThemeBundle
 
 logger = logging.getLogger(__name__)
@@ -58,6 +58,7 @@ class EngineCore:
         self.persona_registry: PersonaRegistry = PersonaRegistry()
         self.state_schema: StateSchema = StateSchema()
         self.resource_schema: ResourceSchema = ResourceSchema()
+        self.npc_schema: NpcSchema = NpcSchema()
         self.data_loader: DataLoader = DataLoader()
 
         # 运行时组件
@@ -111,14 +112,15 @@ class EngineCore:
             self.resource_schema.register_from_list(resources)
             logger.info(f"题材包注册 {len(resources)} 个资源")
 
-        # 5. 人格模板（从 NPC YAML 加载）
+        # 5. 人格模板 + NPC schema（从 NPC YAML 加载）
         if bundle.npcs_dir:
             npc_ids = self.data_loader.list_npcs_from(bundle.npcs_dir)
             for npc_id in npc_ids:
                 npc_data = self.data_loader.load_npc_from(bundle.npcs_dir, npc_id)
                 if npc_data:
                     self.persona_registry.register_from_yaml(npc_id, npc_data)
-            logger.info(f"题材包加载 {len(npc_ids)} 个 NPC 人格模板")
+                    self.npc_schema.register_from_yaml(npc_id, npc_data)
+            logger.info(f"题材包加载 {len(npc_ids)} 个 NPC（人格模板 + 初始状态 schema）")
 
     def load_default_theme(self) -> None:
         """加载默认题材（火星基地，向后兼容）
@@ -158,8 +160,11 @@ class EngineCore:
             if not self.ending_registry._entries:
                 self.load_default_theme()
 
-        # 初始化 GameState（题材包可覆盖资源/状态字段）
-        self.game_state = create_initial_game_state()
+        # 初始化 GameState（Phase 4：题材包有 NPC schema 时动态创建 NPC）
+        if self.npc_schema and len(self.npc_schema) > 0:
+            self.game_state = create_initial_game_state(npc_schema=self.npc_schema)
+        else:
+            self.game_state = create_initial_game_state()
 
         # 应用题材包状态字段（custom_fields）
         if self.state_schema:
@@ -355,6 +360,7 @@ class EngineCore:
             "has_bundle": True,
             "resource_schema": self.resource_schema.list_resources(),
             "state_fields": self.state_schema.list_fields(),
+            "npc_schema": self.npc_schema.list_npcs(),
             "endings": [
                 {
                     "id": e.ending_id,
