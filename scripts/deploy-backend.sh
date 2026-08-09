@@ -40,11 +40,15 @@ else
     cd "${INSTALL_DIR}"
 fi
 
-# 安装/升级 Python 依赖
+# 创建并使用 Python 虚拟环境（避免 PEP 668 externally-managed-environment 错误）
+echo "[INFO] 创建 Python 虚拟环境..."
+python3 -m venv "${INSTALL_DIR}/venv"
+source "${INSTALL_DIR}/venv/bin/activate"
+
 echo "[INFO] 安装依赖..."
 cd backend
-python3 -m pip install --user -q --upgrade pip
-python3 -m pip install --user -q -r requirements.txt
+python3 -m pip install -q --upgrade pip
+python3 -m pip install -q -r requirements.txt
 
 # 写入环境变量文件
 cat > "${INSTALL_DIR}/backend/.env" <<EOF
@@ -69,7 +73,7 @@ Type=simple
 User=${USER}
 WorkingDirectory=${INSTALL_DIR}/backend
 EnvironmentFile=${INSTALL_DIR}/backend/.env
-ExecStart=/usr/bin/python3 ${INSTALL_DIR}/backend/ws_server.py --host 0.0.0.0 --port ${PORT}
+ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/backend/ws_server.py --host 0.0.0.0 --port ${PORT}
 Restart=always
 RestartSec=5
 

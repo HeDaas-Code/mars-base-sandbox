@@ -72,10 +72,14 @@ setup_code() {
 
 # 安装 Python 依赖并写入环境变量
 setup_backend() {
+    echo "[INFO] 创建 Python 虚拟环境..."
+    python3 -m venv "${INSTALL_DIR}/venv"
+    source "${INSTALL_DIR}/venv/bin/activate"
+
     echo "[INFO] 安装依赖..."
     cd "${INSTALL_DIR}/backend"
-    python3 -m pip install --user -q --upgrade pip
-    python3 -m pip install --user -q -r requirements.txt
+    python3 -m pip install -q --upgrade pip
+    python3 -m pip install -q -r requirements.txt
 
     cat > "${INSTALL_DIR}/backend/.env" <<EOF
 LLM_API_KEY=${LLM_API_KEY}
@@ -100,7 +104,7 @@ Type=simple
 User=${USER}
 WorkingDirectory=${INSTALL_DIR}/backend
 EnvironmentFile=${INSTALL_DIR}/backend/.env
-ExecStart=/usr/bin/python3 ${INSTALL_DIR}/backend/ws_server.py --host 127.0.0.1 --port ${BACKEND_PORT}
+ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/backend/ws_server.py --host 127.0.0.1 --port ${BACKEND_PORT}
 Restart=always
 RestartSec=5
 
