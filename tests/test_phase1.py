@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """compress_context + write_episodic_memory + condition 集成测试"""
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend'))
 
 from agent.compress import compress_context, write_episodic_memory, detect_emotion
 from agent.condition import evaluate_condition, check_conditions

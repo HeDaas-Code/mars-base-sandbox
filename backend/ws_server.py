@@ -14,7 +14,7 @@ WebSocket 联调服务器 v1.0
   后端模块：ws_adapter_v2.process_input()
 
 启动：
-  cd shared/mars-base/backend
+  cd backend
   python3 ws_server.py [--port 8000] [--host 0.0.0.0]
 """
 

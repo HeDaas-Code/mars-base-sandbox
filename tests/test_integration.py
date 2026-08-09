@@ -7,12 +7,12 @@ WebSocket 联调验证脚本 v1.0
 
 用法：
   # 终端 1: 启动服务器
-  cd shared/mars-base/backend
+  cd backend
   python3 ws_server.py
 
   # 终端 2: 运行验证脚本
-  cd shared/mars-base/backend
-  python3 test_integration.py
+  cd backend
+  python3 ../tests/test_integration.py
 """
 
 import asyncio
@@ -21,7 +21,7 @@ import sys
 import os
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend'))
 
 try:
     import websockets

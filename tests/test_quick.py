@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """快速测试脚本"""
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend'))
 
 from agent.graph import Agent
 from agent.memory import MemoryStore
 from agent.config import config
-from data.seed_memories import SEED_MEMORIES_CHEN_HAO
+from seed_memories import SEED_MEMORIES_CHEN_HAO
 
 # 初始化记忆
 store = MemoryStore(config.chroma_persist_dir, config.chroma_collection_name)

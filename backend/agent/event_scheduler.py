@@ -122,6 +122,11 @@ class EventScheduler:
         self.chapter.stage_id = stage_id
         self.chapter.sol = yaml_data.get("sol_range", [1, 10])[0]
         self.chapter.real_sol = yaml_data.get("real_sol_range", [100, 110])[0]
+        # 章节切换时重置运行时状态，避免上一章节的 fired_trigger_ids / active_events 残留
+        # （trigger_id 跨章节唯一，无需跨章节去重；残留会导致进度统计错误，如 explore 显示 5/8）
+        self.chapter.fired_trigger_ids = set()
+        self.chapter.active_events = []
+        self.chapter.current_fsm_node = ""
 
         raw_triggers = extract_triggers(yaml_data)
         self.chapter.triggers = []
@@ -144,6 +149,28 @@ class EventScheduler:
             f"章节初始化: {stage_id}, Sol {self.chapter.sol}, "
             f"{len(self.chapter.triggers)} 个触发器"
         )
+
+        # 章节加载后立即检查初始触发器（如 sol == 1 的触发器）
+        self._check_initial_triggers()
+
+    def _check_initial_triggers(self) -> None:
+        """章节初始化后检查满足条件的初始触发器"""
+        ctx = self._build_condition_context()
+        for t in self.chapter.triggers:
+            if t.status != "inactive":
+                continue
+            if t.trigger_id in self.chapter.fired_trigger_ids:
+                continue
+            try:
+                if evaluate_condition(t.condition, ctx):
+                    t.status = "active"
+                    t.fired_sol = self.chapter.sol
+                    evt = self._trigger_to_event(t)
+                    if evt:
+                        self.chapter.active_events.append(evt)
+                    logger.info(f"初始触发器激活: {t.trigger_id} (Sol {self.chapter.sol})")
+            except (ValueError, SyntaxError, TypeError) as e:
+                logger.warning(f"初始触发器 condition 求值失败 {t.trigger_id}: {e}")
 
     # --------------------------------------------------------
     # Sol 推进
@@ -233,6 +260,7 @@ class EventScheduler:
         self.chapter.active_events.remove(event)
 
         if event.trigger_id:
+            self.chapter.fired_trigger_ids.add(event.trigger_id)
             for t in self.chapter.triggers:
                 if t.trigger_id == event.trigger_id:
                     t.status = "fired"
@@ -317,6 +345,8 @@ class EventScheduler:
         }
 
         # NPC 状态（点号风格 + 下划线风格）
+        # stress/morale 存储为 0-1 浮点，YAML condition 使用 0-100 量纲（如 stress > 50）
+        # 因此下划线风格的 *_stress/*_morale 乘以 100 传递
         for npc_id, npc in gs.npc_states.items():
             npc_dict = {
                 "stress": npc.stress,
@@ -327,8 +357,8 @@ class EventScheduler:
                 "current_state": npc.current_state,
             }
             ctx[npc_id] = npc_dict
-            ctx[f"{npc_id}_stress"] = npc.stress
-            ctx[f"{npc_id}_morale"] = npc.morale
+            ctx[f"{npc_id}_stress"] = round(npc.stress * 100)
+            ctx[f"{npc_id}_morale"] = round(npc.morale * 100)
             ctx[f"{npc_id}_trust"] = npc.trust_in_player
             ctx[f"{npc_id}_energy"] = npc.energy
             ctx[f"{npc_id}_current_state"] = npc.current_state
@@ -358,6 +388,13 @@ class EventScheduler:
         ctx.setdefault("tutorial_choice", "")
         ctx.setdefault("branch_fork_visible", False)
         ctx.setdefault("atmosphere_anomaly_detected", False)
+        ctx.setdefault("athena_proposal_count", 0)
+        ctx.setdefault("linruoxi_self_blame", "inactive")
+        ctx.setdefault("exploration_radius", 0)
+        ctx.setdefault("comm_priority", "normal")
+        ctx.setdefault("decision_first_made", False)
+        ctx.setdefault("crew_workload", gs.crew_workload)
+        ctx.setdefault("base_integrity", gs.base_integrity)
 
         if hasattr(gs, "state_flags") and isinstance(gs.state_flags, dict):
             ctx.update(gs.state_flags)

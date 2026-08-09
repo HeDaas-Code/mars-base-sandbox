@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ws_adapter 集成测试 - 验证命令路由 + agent_message 格式 + context_summary"""
 import sys, os, shutil
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend'))
 
 from agent.config import config
 

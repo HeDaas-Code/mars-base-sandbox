@@ -9,7 +9,8 @@ BNF 文法见接口规范 §3.2
 
 import ast
 import operator
-from typing import Any, Dict
+import random
+from typing import Any, Dict, Callable
 
 
 # 允许的 AST 节点类型
@@ -27,12 +28,18 @@ _ALLOWED_NODE_TYPES = (
     ast.Not,          # not 运算
     ast.And,          # and 运算符
     ast.Or,           # or 运算符
+    ast.Call,         # 白名单函数调用 (random_roll 等)
     # 比较运算符
     ast.Eq, ast.NotEq,
     ast.Lt, ast.LtE,
     ast.Gt, ast.GtE,
     ast.In, ast.NotIn,
 )
+
+# 允许的内置函数（白名单）
+_ALLOWED_FUNCS: Dict[str, Callable] = {
+    "random_roll": lambda p: random.random() < float(p),
+}
 
 # 允许的比较运算符
 _COMPARE_OPS = {
@@ -89,18 +96,17 @@ def _eval_node(node: ast.AST, context: Dict[str, Any]) -> Any:
     """递归求值 AST 节点"""
 
     if isinstance(node, ast.BoolOp):
-        # and / or
-        values = [_eval_node(v, context) for v in node.values]
+        # and / or（短路求值）
         if isinstance(node.op, ast.And):
-            result = True
-            for v in values:
-                result = result and v
-            return result
+            for v in node.values:
+                if not _eval_node(v, context):
+                    return False
+            return True
         elif isinstance(node.op, ast.Or):
-            result = False
-            for v in values:
-                result = result or v
-            return result
+            for v in node.values:
+                if _eval_node(v, context):
+                    return True
+            return False
 
     elif isinstance(node, ast.UnaryOp):
         operand = _eval_node(node.operand, context)
@@ -149,6 +155,15 @@ def _eval_node(node: ast.AST, context: Dict[str, Any]) -> Any:
 
     elif isinstance(node, ast.List):
         return [_eval_node(e, context) for e in node.elts]
+
+    elif isinstance(node, ast.Call):
+        func_name = ""
+        if isinstance(node.func, ast.Name):
+            func_name = node.func.id
+        if func_name not in _ALLOWED_FUNCS:
+            raise ValueError(f"不允许的函数调用: {func_name}")
+        args = [_eval_node(a, context) for a in node.args]
+        return _ALLOWED_FUNCS[func_name](*args)
 
     else:
         raise ValueError(f"不支持的 AST 节点类型: {type(node).__name__}")
