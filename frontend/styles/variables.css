@@ -87,6 +87,17 @@
   --layout-crew-w: 210px;
   --layout-gap: 1px;
 
+  /* === 氛围层变量（CRT 扫描线 / 辉光） ===
+     terra-faction-ui: 装饰不得脱离任务。
+     扫描线与辉光服务于"远程终端/孤独感"叙事，强度可控 */
+  --crt-scanline-opacity: 0.04;      /* 扫描线透明度（极淡） */
+  --crt-scanline-height: 2px;        /* 扫描线粗细 */
+  --crt-scanline-gap: 4px;           /* 扫描线间距 */
+  --crt-scanline-speed: 10s;         /* 慢定向循环 6-14s */
+  --crt-vignette-opacity: 0.25;      /* 屏幕边缘暗角 */
+  --glow-intensity: 0.18;            /* 文字辉光强度 */
+  --glow-color: var(--signal);       /* 辉光色 */
+
   /* === 动画时长（terra-faction-ui motion-grammar） ===
      直接反馈 160-280ms · 主承诺 360-680ms · 慢循环 6-14s */
   --anim-cursor-blink: 1s;
@@ -95,6 +106,7 @@
   --anim-feedback: 200ms;      /* 直接选择反馈 */
   --anim-commit: 500ms;        /* 主承诺落地 */
   --anim-pulse: 2s;            /* 状态注意循环 */
+  --anim-crt-scan: 10s;        /* CRT 扫描线慢循环 */
 
   /* === 焦点轮廓（terra-faction-ui: 2px + offset） === */
   --focus-outline: 2px solid var(--signal);

@@ -62,12 +62,15 @@
   width: 90%;
 }
 
-/* 启动标题：右上切角（气闸门隐喻），无辉光 */
+/* 启动标题：右上切角（气闸门隐喻）+ 强辉光（关键入口） */
 .boot-title {
   font-size: 48px;
   letter-spacing: 8px;
   color: var(--signal);
   animation: fade-in 0.6s ease-out;
+  text-shadow:
+    0 0 2px rgba(200, 146, 73, var(--glow-intensity)),
+    0 0 10px rgba(200, 146, 73, calc(var(--glow-intensity) * 0.6));
 }
 
 .boot-subtitle {
@@ -142,7 +145,70 @@
   animation: screen-shake 0.5s;
 }
 
-/* === 信号扫描线（搜索信号时，功能性） === */
+/* ============================================
+   氛围层动画（CRT 扫描线 / 文字辉光）
+   服务于"远程终端/孤独感"叙事任务
+   ============================================ */
+
+/* CRT 扫描线：慢定向循环，极淡 */
+@keyframes crt-scan {
+  0% { transform: translateY(-100vh); }
+  100% { transform: translateY(100vh); }
+}
+
+/* 文字辉光呼吸：极慢循环，不抢夺注意力 */
+@keyframes text-glow-breathe {
+  0%, 100% { text-shadow: 0 0 2px rgba(217, 183, 121, calc(var(--glow-intensity) * 0.8)); }
+  50% { text-shadow: 0 0 3px rgba(217, 183, 121, calc(var(--glow-intensity) * 1.2)); }
+}
+
+/* 标题/关键信号：带呼吸辉光 */
+.glow-breathe {
+  animation: text-glow-breathe 8s ease-in-out infinite;
+}
+
+/* 强辉光：用于启动标题、结局标题等关键入口 */
+.glow-strong {
+  text-shadow:
+    0 0 2px rgba(217, 183, 121, var(--glow-intensity)),
+    0 0 8px rgba(217, 183, 121, calc(var(--glow-intensity) * 0.5));
+}
+
+/* 信号色辉光：用于通信相关元素 */
+.glow-signal {
+  text-shadow:
+    0 0 2px rgba(91, 158, 184, var(--glow-intensity)),
+    0 0 6px rgba(91, 158, 184, calc(var(--glow-intensity) * 0.4));
+}
+
+/* 临界辉光：危险/警告文字 */
+.glow-critical {
+  text-shadow:
+    0 0 2px rgba(200, 74, 58, var(--glow-intensity)),
+    0 0 6px rgba(200, 74, 58, calc(var(--glow-intensity) * 0.4));
+}
+
+/* === 提交反馈动画（terra-faction-ui: 跨模块确认） === */
+@keyframes commit-flash {
+  0% { background-color: rgba(200, 146, 73, 0.25); }
+  100% { background-color: transparent; }
+}
+
+.commit-feedback {
+  animation: commit-flash 0.5s ease-out;
+}
+
+/* === 焦点承诺动画 === */
+@keyframes focus-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 146, 73, 0.3); }
+  50% { box-shadow: 0 0 0 3px rgba(200, 146, 73, 0.1); }
+}
+
+.focus-commit {
+  animation: focus-pulse 2s ease-in-out infinite;
+}
+
+/* === 扫描线搜索状态（功能性：搜索信号时） === */
 @keyframes scan-line {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }

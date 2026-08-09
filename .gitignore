@@ -75,6 +75,9 @@ yarn-error.log*
 .npm
 .yarn-integrity
 
+# Trae 预览/分享产物
+.trae-html-share-packages/
+
 # ---- IDE / 编辑器 ----
 .vscode/
 .idea/

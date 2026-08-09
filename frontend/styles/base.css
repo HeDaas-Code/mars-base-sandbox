@@ -22,11 +22,67 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* terra-faction-ui: 不使用装饰性扫描线/辉光
-   技术可信度来自真实状态和克制的元数据，而非编造的 HUD 噪声 */
+/* === 氛围层：CRT 扫描线 + 屏幕暗角 + 文字辉光 ===
+   terra-faction-ui: 装饰不得脱离任务。
+   扫描线/辉光/暗角服务于"远程终端/孤独感"叙事情绪，
+   强度由变量控制，prefers-reduced-motion 下降级。 */
 body {
-  background-image: none;
-  text-shadow: none;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent var(--crt-scanline-gap),
+      rgba(0, 0, 0, var(--crt-scanline-opacity)) var(--crt-scanline-gap),
+      rgba(0, 0, 0, var(--crt-scanline-opacity)) calc(var(--crt-scanline-gap) + var(--crt-scanline-height))
+    );
+  background-size: 100% calc(var(--crt-scanline-gap) + var(--crt-scanline-height));
+  text-shadow: 0 0 2px rgba(217, 183, 121, var(--glow-intensity));
+  position: relative;
+}
+
+/* 屏幕边缘暗角：强化聚焦与孤独感 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 998;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(0, 0, 0, var(--crt-vignette-opacity)) 100%
+  );
+}
+
+/* 动态扫描线：慢定向循环，仅在非减弱动效时启用 */
+.crt-scanline {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: var(--crt-scanline-height);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(200, 146, 73, 0.08) 50%,
+    transparent 100%
+  );
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 997;
+  animation: crt-scan var(--anim-crt-scan) linear infinite;
+}
+
+/* 信号丢失时增强氛围：扫描线加重 + 辉光减弱 */
+body.signal-lost {
+  --crt-scanline-opacity: 0.12;
+  --crt-vignette-opacity: 0.55;
+  --glow-intensity: 0.05;
+}
+
+/* 警报状态时：暗角泛入临界色 */
+body.alert-mode {
+  --crt-vignette-opacity: 0.35;
+  --glow-color: var(--critical);
 }
 
 .hidden {
@@ -192,11 +248,25 @@ button:focus-visible,
   outline-offset: var(--focus-offset);
 }
 
-/* === prefers-reduced-motion 降级（terra-faction-ui 可访问性） === */
+/* === prefers-reduced-motion 降级（terra-faction-ui 可访问性） ===
+   扫描线/辉光在减弱动效时关闭或静态化 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  body {
+    background-image: none;
+    text-shadow: none;
+  }
+
+  body::before {
+    content: none;
+  }
+
+  .crt-scanline {
+    display: none;
   }
 }

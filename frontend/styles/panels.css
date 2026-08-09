@@ -103,6 +103,36 @@
   font-family: var(--font-mono);
 }
 
+/* 资源状态链（terra-faction-ui: 第二仪器/状态链）
+   显示 当前值 → 变化率 → 预估续航 */
+.resource-chain {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.resource-chain .link {
+  opacity: 0.5;
+}
+
+.resource-chain .rate {
+  color: var(--status-warn);
+}
+
+.resource-chain .rate.positive {
+  color: var(--status-ok);
+}
+
+.resource-chain .eta {
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+}
+
 /* === 进度条（直角标尺式，非圆角） === */
 .progress-bar-container {
   height: 10px;
@@ -174,16 +204,29 @@
   background-color: var(--field);
   border-left: 3px solid var(--rule);
   border-radius: var(--radius);
-  transition: border-color var(--anim-feedback);
+  transition: border-color var(--anim-feedback), background-color var(--anim-feedback), transform var(--anim-feedback);
+  cursor: pointer;
+  min-height: 40px;  /* terra-faction-ui: 点击目标至少 40px */
 }
 
 .crew-item:hover {
   border-left-color: var(--signal);
+  background-color: var(--surface-2);
+}
+
+.crew-item:active {
+  transform: translateY(1px);
+}
+
+.crew-item:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-offset);
 }
 
 .crew-item.active {
   border-left-color: var(--signal);
   background-color: var(--surface-2);
+  box-shadow: inset 0 0 0 1px rgba(200, 146, 73, 0.25);
 }
 
 .crew-item-header {

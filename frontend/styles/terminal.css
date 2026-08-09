@@ -1,6 +1,6 @@
 /* ============================================
    终端样式 · xterm.js 定制
-   terra-faction-ui: 克制元数据，无装饰性辉光
+   terra-faction-ui: 克制元数据，氛围层辉光服务于叙事任务
    信号遮罩保留（承载真实信号质量状态）
    ============================================ */
 
@@ -98,12 +98,20 @@
   color: var(--critical);
 }
 
+.sys-msg-alert.glow-critical {
+  text-shadow: 0 0 2px rgba(200, 74, 58, var(--glow-intensity));
+}
+
 .sys-msg-ok {
   color: var(--status-ok);
 }
 
 .sys-msg-warn {
   color: var(--status-warn);
+}
+
+.sys-msg-warn.glow-warn {
+  text-shadow: 0 0 2px rgba(200, 146, 73, var(--glow-intensity));
 }
 
 /* === 玩家消息标识 === */

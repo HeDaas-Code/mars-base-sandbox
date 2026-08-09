@@ -186,24 +186,39 @@
   border: 1px solid var(--color-border);
   background-color: var(--color-bg-primary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color var(--anim-feedback), background-color var(--anim-feedback), transform var(--anim-feedback);
   font-family: var(--font-mono);
   font-size: var(--font-size-body);
   line-height: 1.5;
   color: var(--color-text-primary);
   position: relative;
+  min-height: 40px;  /* terra-faction-ui: 点击目标至少 40px */
 }
 
-.event-option:hover,
-.event-option:focus {
+/* 悬停：边框高亮 + 左侧信号条 */
+.event-option:hover {
   border-color: var(--color-text-primary);
-  background-color: rgba(255, 179, 71, 0.08);
-  outline: none;
+  background-color: rgba(200, 146, 73, 0.08);
 }
 
+/* 按压态：微位移 + 收束感 */
+.event-option:active {
+  transform: translateY(1px);
+  background-color: rgba(200, 146, 73, 0.12);
+}
+
+/* 焦点：可见轮廓 + 左侧信号条（键盘可访问） */
+.event-option:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-offset);
+  border-color: var(--signal);
+}
+
+/* 选中：承诺态（可与 commit-feedback 动画叠加） */
 .event-option.selected {
   border-color: var(--color-text-highlight);
-  background-color: rgba(255, 214, 153, 0.12);
+  background-color: rgba(200, 146, 73, 0.12);
+  box-shadow: inset 3px 0 0 var(--signal);
 }
 
 .event-option.disabled {
@@ -598,6 +613,9 @@
   color: var(--ai-athena);
   font-weight: bold;
   letter-spacing: 2px;
+  text-shadow:
+    0 0 2px rgba(154, 127, 184, var(--glow-intensity)),
+    0 0 8px rgba(154, 127, 184, calc(var(--glow-intensity) * 0.5));
 }
 
 .ending-title {
@@ -605,6 +623,7 @@
   font-size: var(--font-size-title);
   color: var(--color-text-highlight);
   margin-top: 4px;
+  text-shadow: 0 0 2px rgba(217, 183, 121, var(--glow-intensity));
 }
 
 .ending-desc {

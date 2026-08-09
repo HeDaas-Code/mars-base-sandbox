@@ -15,10 +15,23 @@
   - 状态指示灯改为直角方块，信号条改为直角分段色块
   - 进度条使用纯色填充 + 刻度标尺，替代渐变 chrome
   - 数值统一使用 `font-variant-numeric: tabular-nums`
-  - 移除全局 CRT 扫描线、文字辉光、装饰性噪点层
   - 结局/事件使用单次承诺动画，禁用无限辉光/装饰闪烁
   - 添加焦点轮廓（2px + offset）与 `prefers-reduced-motion` 降级
   - 涉及文件：`frontend/styles/variables.css`, `base.css`, `panels.css`, `terminal.css`, `animations.css`, `event-panel.css`
+
+- **恢复氛围层：CRT 扫描线与文字辉光**
+  - 在 terra-faction-ui「装饰不得脱离任务」原则下，恢复 CRT 扫描线、文字辉光、屏幕暗角
+  - 扫描线/辉光强度由 CSS 变量控制（`--crt-scanline-opacity` / `--glow-intensity`）
+  - 氛围层随游戏状态变化：`signal-lost` 扫描线加重、辉光减弱；`alert-mode` 暗角泛入临界色
+  - 仅标题/关键信号/危险文字使用辉光，不全局泛化
+  - `prefers-reduced-motion` 下降级关闭氛围层动画
+
+- **借鉴 terra-faction-ui 交互优化**
+  - 增加 `.commit-feedback` 一次性背景闪光，提供跨模块提交确认
+  - 增加 `:active` 按压态（1px 微位移 + 背景加深）
+  - 资源面板增加 `.resource-chain` 状态链（当前值 → 变化率 → 预估续航）
+  - 增加 `.focus-commit` 焦点脉冲阴影，强化键盘导航
+  - `event-option` / `crew-item` 增加 `min-height: 40px` 与可见焦点轮廓
 
 - **修复引擎化过程中的错误设计**
   - 明确引擎化目的：从"多题材/主题切换"修正为"单一固定配置的数据驱动，便于进一步开发"

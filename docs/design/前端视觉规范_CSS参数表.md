@@ -248,7 +248,84 @@
 }
 ```
 
-> **terra-faction-ui 说明**：移除 `text-shadow` 辉光与 `signal-flicker` 装饰闪烁。信号表现应来自真实 `signal_quality_pct` 值，而非无数据支撑的 HUD 噪声。
+> **氛围层说明**：CRT 扫描线与文字辉光已恢复，但**服务于"远程终端/孤独感"叙事任务**，强度由 `--crt-scanline-opacity` / `--glow-intensity` 控制，并随 `signal-lost` / `alert-mode` 状态变化。信号遮罩仍承载真实 `signal_quality_pct` 值，氛围层不覆盖数据层。
+
+---
+
+## 五（附）. 氛围层：CRT 扫描线与文字辉光
+
+### 5.1 设计原则
+
+氛围层装饰恢复，但遵循 terra-faction-ui「装饰不得脱离任务」原则：
+
+- **CRT 扫描线**：慢定向循环（10s），极淡（opacity 0.04），强化老式远程终端感
+- **屏幕暗角**：边缘渐黑，强化聚焦与孤独感
+- **文字辉光**：仅用于标题/关键信号/危险文字，不全局泛化
+- **状态联动**：`signal-lost` 时扫描线加重、辉光减弱；`alert-mode` 时暗角泛入临界色
+
+### 5.2 CSS 变量
+
+```css
+:root {
+  --crt-scanline-opacity: 0.04;
+  --crt-scanline-height: 2px;
+  --crt-scanline-gap: 4px;
+  --crt-scanline-speed: 10s;
+  --crt-vignette-opacity: 0.25;
+  --glow-intensity: 0.18;
+  --glow-color: var(--signal);
+}
+```
+
+### 5.3 动态扫描线元素
+
+```html
+<!-- 放在 body 开头，pointer-events: none -->
+<div class="crt-scanline" aria-hidden="true"></div>
+```
+
+```css
+.crt-scanline {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: var(--crt-scanline-height);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(200, 146, 73, 0.08) 50%,
+    transparent 100%
+  );
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 997;
+  animation: crt-scan var(--anim-crt-scan) linear infinite;
+}
+
+@keyframes crt-scan {
+  0% { transform: translateY(-100vh); }
+  100% { transform: translateY(100vh); }
+}
+```
+
+### 5.4 辉光工具类
+
+```css
+.glow-breathe    { animation: text-glow-breathe 8s ease-in-out infinite; }
+.glow-strong     { text-shadow: 0 0 2px rgba(217,183,121,var(--glow-intensity)), 0 0 8px rgba(217,183,121,calc(var(--glow-intensity)*0.5)); }
+.glow-signal     { text-shadow: 0 0 2px rgba(91,158,184,var(--glow-intensity)), 0 0 6px rgba(91,158,184,calc(var(--glow-intensity)*0.4)); }
+.glow-critical   { text-shadow: 0 0 2px rgba(200,74,58,var(--glow-intensity)), 0 0 6px rgba(200,74,58,calc(var(--glow-intensity)*0.4)); }
+```
+
+### 5.5 可访问性降级
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  body { background-image: none; text-shadow: none; }
+  body::before { content: none; }
+  .crt-scanline { display: none; }
+}
+```
 
 ---
 
@@ -480,15 +557,77 @@ button:focus-visible,
 
 ---
 
-## 十一、实现检查清单
+## 十一、借鉴 terra-faction-ui 的优化
+
+### 11.1 提交反馈（commit feedback）
+
+选项/命令触发后，目标元素播放一次性背景闪光，提供跨模块确认：
+
+```css
+.commit-feedback {
+  animation: commit-flash 0.5s ease-out;
+}
+
+@keyframes commit-flash {
+  0% { background-color: rgba(200, 146, 73, 0.25); }
+  100% { background-color: transparent; }
+}
+```
+
+### 11.2 按压态（active state）
+
+按钮/选项/条目按下时有 1px 微位移 + 背景加深，提供机械按压感：
+
+```css
+.event-option:active,
+.crew-item:active {
+  transform: translateY(1px);
+  background-color: rgba(200, 146, 73, 0.12);
+}
+```
+
+### 11.3 状态链 / 第二仪器
+
+资源面板显示"当前值 → 变化率 → 预估续航"链式信息，作为第二仪器：
+
+```css
+.resource-chain {
+  display: flex;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+}
+```
+
+### 11.4 焦点承诺（focus commit）
+
+焦点状态除轮廓外，增加柔和脉冲阴影，强化键盘导航可见性：
+
+```css
+.focus-commit {
+  animation: focus-pulse 2s ease-in-out infinite;
+}
+
+@keyframes focus-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 146, 73, 0.3); }
+  50% { box-shadow: 0 0 0 3px rgba(200, 146, 73, 0.1); }
+}
+```
+
+---
+
+## 十二、实现检查清单
 
 - [ ] 所有 `border-radius` 使用 `var(--radius)`（0）
 - [ ] 面板标题使用 `clip-path: var(--chamfer-top-right)` + 左侧信号条
 - [ ] 数值使用 `font-variant-numeric: tabular-nums`
-- [ ] 移除全局 CRT 扫描线、文字辉光、装饰性噪点层
+- [ ] CRT 扫描线/辉光强度可控，服务于叙事任务，不覆盖数据层
 - [ ] 状态指示灯为直角方块，非圆形
 - [ ] 信号强度条为直角分段色块
 - [ ] 进度条使用纯色填充 + 刻度标尺，不使用渐变 chrome
 - [ ] 结局/事件使用单次承诺动画，不使用无限辉光
+- [ ] 选项/条目提供 `:active` 按压态
+- [ ] 资源面板提供状态链/第二仪器
 - [ ] 所有焦点元素有可见 `2px` 轮廓 + offset
 - [ ] 提供 `prefers-reduced-motion` 降级
