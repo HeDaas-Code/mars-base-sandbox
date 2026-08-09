@@ -129,6 +129,31 @@ python main.py
 
 ---
 
+## 在线部署
+
+> GitHub Pages 只能托管静态前端，Python WebSocket 后端需要部署到支持 WebSocket 的平台。这里使用 **GitHub Pages + Render（免费套餐）**。
+
+### 前端：GitHub Pages
+
+1. 仓库 `Settings > Pages > Source` 选择 **GitHub Actions**
+2. 推送代码后，工作流 `.github/workflows/deploy-frontend.yml` 自动部署
+3. 访问地址：`https://hedaas-code.github.io/mars-base-sandbox/`
+4. 如需自定义后端地址，在仓库 `Settings > Secrets and variables > Actions > Variables` 添加 `WS_URL`
+
+### 后端：Render（免费 Web Service）
+
+1. 登录 [Render](https://render.com/)（可用 GitHub 学生包或免费账号）
+2. 新建 **Web Service**，选择本 GitHub 仓库
+3. Render 会自动读取 `render.yaml`：
+   - Build Command: `pip install -r backend/requirements.txt`
+   - Start Command: `cd backend && python ws_server.py --host 0.0.0.0 --port ${PORT:-8000}`
+4. 等待部署完成，记录 URL（例如 `https://mars-base-sandbox-backend.onrender.com`）
+5. 在 GitHub 仓库 Variables 中设置 `WS_URL=wss://mars-base-sandbox-backend.onrender.com/ws`，重新部署前端
+
+> Render 免费套餐在无请求 15 分钟后会休眠，首次访问可能需要等待 30 秒唤醒。
+
+---
+
 ## 游戏机制
 
 | 机制 | 说明 |

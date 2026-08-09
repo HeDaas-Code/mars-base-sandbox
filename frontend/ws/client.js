@@ -13,7 +13,11 @@
 class MarsSignalClient {
   constructor(options = {}) {
     // WebSocket URL（云逸 v1.1 §1.1：URL 不带 player_id/token）
-    this.url = options.url || 'ws://localhost:8000/ws';
+    // 生产环境：GitHub Actions 部署时会替换 ws://localhost:8000/ws 为实际后端地址
+    const defaultUrl = (typeof window !== 'undefined' && window.location.hostname.includes('github.io'))
+      ? 'wss://mars-base-sandbox-backend.onrender.com/ws'
+      : 'ws://localhost:8000/ws';
+    this.url = options.url || defaultUrl;
     // mock 模式：不连真实后端，用本地 mock 数据
     this.mockMode = options.mockMode !== undefined ? options.mockMode : true;
     // 鉴权 token
