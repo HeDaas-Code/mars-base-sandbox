@@ -506,26 +506,26 @@ async def client_handler(websocket):
 async def start_server(host: str = "0.0.0.0", port: int = 8000):
     """启动 WebSocket 服务器"""
 
-    # Phase 3 引擎化：优先用 EngineCore 加载题材包
+    # 引擎化：用 EngineCore 加载项目固定配置（dict/theme_mars_base）
+    # 注意：这里不是"主题切换"，而是加载本项目的数据驱动配置，
+    # 将结局/命令/状态字段/NPC 等从硬编码迁移到 YAML，便于进一步开发。
     engine_injected = False
     try:
         from agent.engine.data_loader import DataLoader
         from agent.engine.engine_core import EngineCore
-        # 题材包目录（相对 backend/ 上一级的项目根 dict/theme_mars_base）
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        theme_dir = os.path.join(project_root, "dict", "theme_mars_base")
+        config_dir = os.path.join(project_root, "dict", "theme_mars_base")
         loader = DataLoader()
-        bundle = loader.load_theme(theme_dir)
+        bundle = loader.load_theme(config_dir)
         if bundle and not bundle.errors:
             engine = EngineCore()
             engine.load_theme(bundle)
             engine.init(start_stage="survival", chat_fn=_chat_fn_proxy)
             set_engine_core(engine)
             engine_injected = True
-            logger.info("EngineCore 已加载题材包: %s (%s)",
-                        bundle.theme_id, bundle.theme_name)
+            logger.info("EngineCore 已加载项目配置: %s", bundle.theme_name)
         else:
-            logger.warning("题材包加载失败，回退到默认 GameLoop: %s",
+            logger.warning("配置加载失败，回退到默认 GameLoop: %s",
                            bundle.errors if bundle else "目录不存在")
     except Exception as e:
         logger.warning("EngineCore 初始化失败，回退到默认 GameLoop: %s", e)
@@ -582,8 +582,6 @@ def main():
     parser = argparse.ArgumentParser(description="WebSocket 联调服务器")
     parser.add_argument("--host", default="0.0.0.0", help="监听地址（默认 0.0.0.0）")
     parser.add_argument("--port", type=int, default=8000, help="监听端口（默认 8000）")
-    parser.add_argument("--theme", default="dict/theme_mars_base",
-                        help="题材包目录（默认 dict/theme_mars_base）")
     args = parser.parse_args()
 
     try:

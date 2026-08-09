@@ -1,14 +1,20 @@
 /* ============================================
    动画样式
+   terra-faction-ui motion-grammar:
+   - 直接反馈 160-280ms
+   - 主承诺 360-680ms
+   - 状态注意循环 1.6-2.4s
+   - 慢定向循环 6-14s
+   原则: 装饰不得脱离任务，不得用动画暗示实时遥测当底层值为静态
    ============================================ */
 
-/* 光标闪烁 */
+/* 光标闪烁（功能性：标识输入焦点） */
 @keyframes cursor-blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0.2; }
 }
 
-/* 信号抖动 */
+/* 信号抖动（功能性：真实信号降级表现） */
 @keyframes signal-jitter {
   0% { transform: translateX(0); }
   25% { transform: translateX(-1px); }
@@ -16,7 +22,7 @@
   100% { transform: translateX(0); }
 }
 
-/* 危险脉冲 */
+/* 危险脉冲（功能性：临界状态注意循环 1.6-2.4s） */
 @keyframes pulse-danger {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -34,23 +40,17 @@
   50%, 100% { opacity: 0.2; }
 }
 
-/* 进度条光泽流动 */
-@keyframes progress-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* === 启动动画 === */
+/* === 启动动画（克制的单次到场，无装饰性辉光） === */
 .boot-screen {
   position: fixed;
   inset: 0;
-  background-color: #000;
+  background-color: var(--field);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   font-family: var(--font-display);
-  color: var(--color-text-primary);
+  color: var(--ink);
   text-align: center;
 }
 
@@ -62,14 +62,12 @@
   width: 90%;
 }
 
+/* 启动标题：右上切角（气闸门隐喻），无辉光 */
 .boot-title {
   font-size: 48px;
   letter-spacing: 8px;
-  color: var(--color-text-primary);
-  text-shadow:
-    0 0 10px var(--color-text-primary),
-    0 0 20px rgba(255, 179, 71, 0.5);
-  animation: title-flicker 3s infinite;
+  color: var(--signal);
+  animation: fade-in 0.6s ease-out;
 }
 
 .boot-subtitle {
@@ -83,12 +81,13 @@
   color: var(--color-text-secondary);
   margin-top: 24px;
   min-height: 20px;
+  font-variant-numeric: tabular-nums;
 }
 
 .boot-progress {
   width: 100%;
   height: 2px;
-  background-color: var(--color-border);
+  background-color: var(--rule);
   margin: 8px 0;
   overflow: hidden;
 }
@@ -96,7 +95,7 @@
 .boot-progress-fill {
   height: 100%;
   width: 0%;
-  background-color: var(--color-text-primary);
+  background-color: var(--signal);
   transition: width 0.3s ease-out;
 }
 
@@ -104,42 +103,28 @@
   font-size: 12px;
   color: var(--color-text-secondary);
   opacity: 0.6;
+  font-variant-numeric: tabular-nums;
 }
 
 .boot-prompt {
   font-size: 14px;
-  color: var(--color-text-primary);
+  color: var(--signal);
   margin-top: 24px;
   animation: blink-unknown 1.5s infinite;
   cursor: pointer;
 }
 
-@keyframes title-flicker {
-  0%, 100% { opacity: 1; }
-  92% { opacity: 1; }
-  93% { opacity: 0.6; }
-  94% { opacity: 1; }
-  96% { opacity: 0.8; }
-  97% { opacity: 1; }
-}
-
-/* === 打字机效果（用于逐字渲染） === */
-@keyframes typewriter-char {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* === 淡入 === */
+/* === 淡入（到场动效 420-800ms） === */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.4s ease-out;
 }
 
-/* === 屏幕轻微震动（重大事件触发） === */
+/* === 屏幕轻微震动（重大事件，功能性） === */
 @keyframes screen-shake {
   0%, 100% { transform: translate(0, 0); }
   10% { transform: translate(-1px, 1px); }
@@ -157,7 +142,7 @@
   animation: screen-shake 0.5s;
 }
 
-/* === 信号扫描线（搜索信号时） === */
+/* === 信号扫描线（搜索信号时，功能性） === */
 @keyframes scan-line {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }
@@ -171,7 +156,7 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    var(--color-signal) 50%,
+    var(--color-signal-blue) 50%,
     transparent 100%
   );
   opacity: 0.6;

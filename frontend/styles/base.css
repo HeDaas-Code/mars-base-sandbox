@@ -1,5 +1,6 @@
 /* ============================================
    基础样式 · 重置与全局
+   terra-faction-ui 设计语言：平面/标尺/蒙版 优先于圆角卡片
    ============================================ */
 
 *, *::before, *::after {
@@ -11,66 +12,61 @@
 html, body {
   height: 100%;
   overflow: hidden;
-  background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  font-family: var(--font-mono), var(--font-cn);
+  background-color: var(--field);
+  color: var(--ink);
+  font-family: var(--font-sans);
   font-size: var(--font-size-body);
   line-height: var(--line-height-body);
+  font-variant-numeric: tabular-nums;  /* terra-faction-ui: 表格数字 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* terra-faction-ui: 不使用装饰性扫描线/辉光
+   技术可信度来自真实状态和克制的元数据，而非编造的 HUD 噪声 */
 body {
-  /* CRT 磷光屏效果：极淡的水平扫描线 */
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 179, 71, 0.03) 0px,
-      rgba(255, 179, 71, 0.03) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-  /* 文字辉光模拟 */
-  text-shadow: 0 0 2px rgba(255, 179, 71, 0.4);
+  background-image: none;
+  text-shadow: none;
 }
 
 .hidden {
   display: none !important;
 }
 
-/* === 滚动条样式 === */
+/* === 滚动条样式（直角，无 border-radius） === */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
+  background: var(--surface);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 0;
+  background: var(--rule);
+  border-radius: var(--radius);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
+  background: var(--signal-ink);
 }
 
-/* === 通用面板边框（1.4 节：CSS 绘制细线边框） === */
+/* === 通用面板（平面 + 标尺分隔，非圆角卡片） === */
 .panel {
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border: 1px solid var(--rule);
   padding: 8px;
+  border-radius: var(--radius);
 }
 
 .panel-title {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: var(--font-size-status);
-  color: var(--color-text-secondary);
+  color: var(--signal-ink);
   text-transform: uppercase;
   letter-spacing: 1px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--rule);
   padding-bottom: 4px;
   margin-bottom: 6px;
 }
@@ -88,15 +84,15 @@ body {
   flex: 1;
   overflow: hidden;
   gap: var(--layout-gap);
-  background-color: var(--color-border);
+  background-color: var(--rule);
 }
 
-/* === 视图切换标签 === */
+/* === 视图切换标签（标尺式，非药丸） === */
 .terminal-header {
   display: flex;
   align-items: stretch;
-  background-color: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--rule);
 }
 
 .view-tabs {
@@ -111,24 +107,31 @@ body {
 .tab {
   background: transparent;
   border: none;
-  border-right: 1px solid var(--color-border);
+  border-right: 1px solid var(--rule);
   color: var(--color-text-secondary);
   font-family: var(--font-mono);
   font-size: var(--font-size-status);
-  padding: 6px 12px;
+  padding: 6px 14px;
   cursor: pointer;
-  transition: color 0.2s, background 0.2s;
+  transition: color var(--anim-feedback), background var(--anim-feedback);
+  border-radius: var(--radius);
+  min-height: 40px;  /* terra-faction-ui: 点击目标至少 40px */
 }
 
 .tab:hover {
-  color: var(--color-text-primary);
-  background: rgba(255, 179, 71, 0.05);
+  color: var(--ink);
+  background: rgba(200, 146, 73, 0.06);
 }
 
 .tab.active {
-  color: var(--color-text-highlight);
-  background: rgba(255, 179, 71, 0.1);
-  border-bottom: 2px solid var(--color-text-primary);
+  color: var(--signal);
+  background: rgba(200, 146, 73, 0.1);
+  border-bottom: 2px solid var(--signal);
+}
+
+.tab:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-offset);
 }
 
 /* === 终端容器 === */
@@ -136,7 +139,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-bg-primary);
+  background-color: var(--field);
   overflow: hidden;
 }
 
@@ -146,20 +149,19 @@ body {
   overflow: hidden;
 }
 
-/* === 输入区 === */
+/* === 输入区（标尺式分隔，非圆角） === */
 .input-area {
   display: flex;
   align-items: center;
-  background-color: var(--color-bg-secondary);
-  border-top: 1px solid var(--color-border);
+  background-color: var(--surface);
+  border-top: 1px solid var(--rule);
   padding: 4px 8px;
-  height: 28px;
+  height: 32px;
 }
 
 .input-area .prompt {
-  color: var(--color-text-primary);
+  color: var(--signal);
   margin-right: 6px;
-  text-shadow: 0 0 4px rgba(255, 179, 71, 0.6);
   animation: cursor-blink var(--anim-cursor-blink) infinite;
 }
 
@@ -168,13 +170,33 @@ body {
   background: transparent;
   border: none;
   outline: none;
-  color: var(--color-text-primary);
+  color: var(--ink);
   font-family: var(--font-mono), var(--font-cn);
   font-size: var(--font-size-body);
-  caret-color: var(--color-text-primary);
+  caret-color: var(--signal);
 }
 
 .player-input::placeholder {
   color: var(--color-text-secondary);
   opacity: 0.5;
+}
+
+.player-input:focus-visible {
+  outline: none;
+}
+
+/* === 全局焦点轮廓（terra-faction-ui: 可见 2px + offset） === */
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-offset);
+}
+
+/* === prefers-reduced-motion 降级（terra-faction-ui 可访问性） === */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,47 +1,65 @@
 /* ============================================
    火星信号 · Mars Signal
-   CSS 变量定义 · 配色规范
-   来源：幻影 v2.0 视觉方案 1.2 节 + 4.4 节
+   CSS 变量定义 · terra-faction-ui 设计语言
+   --------------------------------------------
+   设计来源：terra-faction-ui 阵营 UI 研究
+   色调通道：cool-dark-industrial（冷暗工业）
+   几何语言：primaryRadius=0（全直角）+ 右上切角
+   设计原则：平面/标尺/蒙版 优先于圆角卡片 chrome
    ============================================ */
 
 :root {
-  /* === 基础配色（1.2 节） === */
-  --color-bg-primary: #0a0805;      /* 主背景：极深棕黑 */
-  --color-bg-secondary: #15100a;    /* 次背景：面板/分区底色 */
-  --color-text-primary: #ffb347;    /* 主文字：琥珀色 */
-  --color-text-highlight: #ffd699; /* 高亮文字 */
-  --color-text-secondary: #8b6914;  /* 次要文字 */
-  --color-warning: #ff4444;         /* 警告色：危险/资源告急 */
-  --color-attention: #ffaa00;       /* 注意色：警告/资源偏低 */
-  --color-safe: #4a9d4a;            /* 安全色：正常状态 */
-  --color-signal: #66ccff;          /* 信号色：通信相关 */
-  --color-border: #3d2b1f;          /* 边框线 */
+  /* === terra-faction-ui 语义变量 ===
+     --field    主背景场（深空/火星表土）
+     --ink      主前景文字（暖琥珀）
+     --surface  表面/面板（略浅于 field）
+     --rule     分隔线/边框
+     --signal   默认信号/选中（琥珀铜）
+     --signal-ink  信号上的深色文字
+     --signal-text 信号上的浅色文字
+     --critical 临界/危险
+     --cultural  次要文化色（基地结构） */
+  --field: #0a0805;
+  --ink: #d9b779;
+  --surface: #14100a;
+  --surface-2: #1c1610;
+  --rule: #3d2b1f;
+  --signal: #c89249;
+  --signal-ink: #5a3d18;
+  --signal-text: #14100a;
+  --critical: #c84a3a;
+  --cultural: #2e5c4a;
 
-  /* === NPC 角色专属色（4.4 节） === */
-  --npc-chenhao: #ffb347;    /* 陈昊 · 深琥珀 · CMDR */
-  --npc-sophia: #4a9d4a;     /* 索菲亚 · 安全绿 · BIO */
-  --npc-viktor: #ffaa00;     /* 维克托 · 橙色 · ENG */
-  --npc-aisha: #66ccff;      /* 艾莎 · 冷蓝 · COMM */
-  --npc-marcus: #ffd699;     /* 马库斯 · 暖白 · MED */
-  --npc-linruoxi: #8b6914;   /* 林若曦 · 暗琥珀 · ATM */
+  /* === 状态语义色（基于 terra-faction-ui 通道） === */
+  --status-ok: #4a8d5a;
+  --status-warn: #c89249;
+  --status-danger: #c84a3a;
+  --status-offline: #4a4035;
 
-  /* === AI 系统色（4.3 节） === */
-  --ai-courier: #66ccff;     /* 信使 · 冷蓝 */
-  --ai-athena: #b399e6;      /* 雅典娜 · 淡紫 */
+  /* === 功能色 === */
+  --color-signal-blue: #5b9eb8;     /* 通信信号 */
+  --color-athena: #9a7fb8;          /* 雅典娜 AI */
 
-  /* === 状态色组合 === */
-  --status-ok: var(--color-safe);
-  --status-warn: var(--color-attention);
-  --status-danger: var(--color-warning);
-  --status-offline: #555555;
+  /* === NPC 角色专属色（信息归属标识，非装饰） === */
+  --npc-chenhao: #c89249;   /* 陈昊 · 指挥官 · 琥珀铜 */
+  --npc-sophia: #4a8d5a;    /* 索菲亚 · 生物学家 · 绿 */
+  --npc-viktor: #d4a042;    /* 维克托 · 工程师 · 橙铜 */
+  --npc-aisha: #5b9eb8;     /* 艾莎 · 通信官 · 冷蓝 */
+  --npc-marcus: #c4a87a;    /* 马库斯 · 医疗官 · 暖砂 */
+  --npc-linruoxi: #8a6d3b;  /* 林若曦 · 气象员 · 暗铜 */
 
-  /* === 字体规范（1.3 节） === */
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Source Code Pro', monospace;
-  --font-display: 'Share Tech Mono', 'Orbitron', monospace;
-  --font-symbols: 'Noto Sans Symbols 2', sans-serif;
-  --font-cn: 'Sarasa Mono SC', '思源等宽', monospace;
+  /* === AI 系统色 === */
+  --ai-courier: #5b9eb8;
+  --ai-athena: #9a7fb8;
 
-  /* === 字号规范（1.3 节） === */
+  /* === 字体规范 ===
+     terra-faction-ui: sans 正文 + mono 表格数字/ID */
+  --font-sans: 'Noto Sans SC', 'PingFang SC', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Source Code Pro', 'SFMono-Regular', Consolas, monospace;
+  --font-display: 'Share Tech Mono', 'Orbitron', var(--font-mono);
+  --font-cn: 'Sarasa Mono SC', '思源等宽', var(--font-mono);
+
+  /* === 字号规范 === */
   --font-size-body: 14px;
   --font-size-title: 18px;
   --font-size-status: 12px;
@@ -51,25 +69,48 @@
   --line-height-status: 1.4;
   --line-height-system: 1.2;
 
-  /* === 信号质量分档（4.5 节） ===
-     80-100% 完整清晰
-     50-79%  偶发缺字 ▓
-     20-49%  频繁乱码 ▒▓
-     0-19%   几乎不可读 */
+  /* === 几何规范（terra-faction-ui: primaryRadius=0） === */
+  --radius: 0;                    /* 全直角，无圆角 */
+  --chamfer-size: 12px;           /* 右上切角大小（气闸门隐喻） */
+  /* 气闸切角 clip-path：右上角 45° 切角，其余直角 */
+  --chamfer-top-right: polygon(0 0, calc(100% - var(--chamfer-size)) 0, 100% var(--chamfer-size), 100% 100%, 0 100%);
+
+  /* === 信号质量分档 === */
   --signal-mask-char-light: '▓';
   --signal-mask-char-heavy: '▒';
   --signal-noise-opacity: 0.7;
 
   /* === 布局尺寸 === */
-  --layout-statusbar-h: 32px;
-  --layout-logstrip-h: 28px;
-  --layout-resource-w: 200px;
-  --layout-crew-w: 200px;
+  --layout-statusbar-h: 36px;
+  --layout-logstrip-h: 30px;
+  --layout-resource-w: 210px;
+  --layout-crew-w: 210px;
   --layout-gap: 1px;
 
-  /* === 动画时长 === */
+  /* === 动画时长（terra-faction-ui motion-grammar） ===
+     直接反馈 160-280ms · 主承诺 360-680ms · 慢循环 6-14s */
   --anim-cursor-blink: 1s;
   --anim-typewriter: 30ms;
   --anim-signal-jitter: 200ms;
-  --anim-pulse: 2s;
+  --anim-feedback: 200ms;      /* 直接选择反馈 */
+  --anim-commit: 500ms;        /* 主承诺落地 */
+  --anim-pulse: 2s;            /* 状态注意循环 */
+
+  /* === 焦点轮廓（terra-faction-ui: 2px + offset） === */
+  --focus-outline: 2px solid var(--signal);
+  --focus-offset: 2px;
+
+  /* ============================================================
+     向后兼容别名（旧变量名 → 新语义变量）
+     保留以避免破坏现有 JS/CSS 引用，逐步迁移
+     ============================================================ */
+  --color-bg-primary: var(--field);
+  --color-bg-secondary: var(--surface);
+  --color-text-primary: var(--ink);
+  --color-text-highlight: var(--signal);
+  --color-text-secondary: #7a6440;
+  --color-warning: var(--critical);
+  --color-attention: var(--status-warn);
+  --color-safe: var(--status-ok);
+  --color-border: var(--rule);
 }

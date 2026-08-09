@@ -63,6 +63,10 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
+# 测试运行产物（每次跑测试自动重新生成，不入库）
+tests/playthrough_log.json
+tests/playthrough_report.md
+
 # ---- 前端 ----
 node_modules/
 npm-debug.log*

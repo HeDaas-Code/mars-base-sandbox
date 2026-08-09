@@ -12,10 +12,11 @@
 .event-container {
   margin: 8px 0;
   padding: 0;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--rule);
+  background-color: var(--surface);
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius);
   animation: event-fade-in 0.4s ease-out;
 }
 
@@ -568,18 +569,20 @@
 
 /* === 10. 结局判定面板（v1.3 §13.3 + §14.3）=== */
 
-/* 10a. 通用 ending-panel 样式 */
+/* 10a. 通用 ending-panel 样式
+   terra-faction-ui: 终局是静态状态，用单次承诺动画而非无限辉光 */
 .ending-panel {
   margin: 8px 0;
   border: 2px solid var(--ai-athena);
-  background-color: var(--color-bg-secondary);
+  background-color: var(--surface);
   overflow: hidden;
-  animation: ending-glow 2s ease-in-out infinite alternate;
+  border-radius: var(--radius);
+  animation: ending-commit 0.6s ease-out;
 }
 
-@keyframes ending-glow {
-  from { box-shadow: 0 0 4px rgba(179, 153, 230, 0.3); }
-  to   { box-shadow: 0 0 12px rgba(179, 153, 230, 0.6); }
+@keyframes ending-commit {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .ending-header {
@@ -657,18 +660,19 @@
   opacity: 0.7;
 }
 
-/* 10c. v1.3 §14.3 结局命中面板（紫色发光边框 + 居中） */
+/* 10c. v1.3 §14.3 结局命中面板（单次承诺动画 + 居中） */
 .ending-hit-panel {
   margin: 16px auto;
   max-width: 90%;
   border: 3px solid var(--ai-athena);
-  animation: ending-hit-flash 0.6s ease-out, ending-glow 2s ease-in-out 0.6s infinite alternate;
+  border-radius: var(--radius);
+  animation: ending-hit-flash 0.6s ease-out;
 }
 
 @keyframes ending-hit-flash {
-  0%   { transform: scale(0.9); opacity: 0; box-shadow: 0 0 0 rgba(179, 153, 230, 0); }
-  50%  { transform: scale(1.02); opacity: 1; box-shadow: 0 0 20px rgba(179, 153, 230, 0.8); }
-  100% { transform: scale(1); opacity: 1; box-shadow: 0 0 12px rgba(179, 153, 230, 0.6); }
+  0%   { transform: scale(0.9); opacity: 0; }
+  50%  { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .ending-hit-panel .ending-title {
@@ -748,11 +752,11 @@
 }
 
 
-/* === 11. 跟进决策面板（二级选项 · Case 1 B 方案） ===
-   视觉区别于一级选项：
+/* === 11. 跟进决策面板（二级选项 · Case 1 B 方案）===
+   视觉区别于一级选项（terra-faction-ui: 全直角，靠尺寸/色彩区分层级）：
    - 缩进 16px（标志"在主选项之下的二次决断"）
    - 紫色色条（--followup-source-color，默认 --ai-athena，AI/NPC 建议场景）
-   - 圆形字母序号 a/b/c（区别一级方形数字 1/2/3）
+   - 小号方形字母序号 a/b/c（区别一级大号方形数字 1/2/3）
    - 整体字号略小（13px / 11px）
    ============================================ */
 
@@ -878,7 +882,7 @@
   text-decoration: line-through;
 }
 
-/* 圆形字母序号 a/b/c（区别一级方形数字 1/2/3） */
+/* 方形字母序号 a/b/c（区别一级方形数字 1/2/3，terra-faction-ui 直角） */
 .followup-option-index {
   flex-shrink: 0;
   width: 18px;
@@ -886,8 +890,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
   font-size: 10px;
   font-weight: bold;
   color: var(--color-text-secondary);
