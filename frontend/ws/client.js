@@ -18,8 +18,8 @@ class MarsSignalClient {
       ? 'wss://BACKEND_URL/ws'
       : 'ws://localhost:8000/ws';
     this.url = options.url || defaultUrl;
-    // mock 模式：不连真实后端，用本地 mock 数据
-    this.mockMode = options.mockMode !== undefined ? options.mockMode : true;
+    // mock 模式：不连真实后端，用本地 mock 数据；生产环境默认关闭
+    this.mockMode = options.mockMode !== undefined ? options.mockMode : false;
     // 鉴权 token
     this.token = options.token || null;
     // 客户端版本（用于版本兼容性检查，云逸 §8.1 close code 4029）
