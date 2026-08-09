@@ -115,6 +115,8 @@ AGENT_TO_NPC_ID: Dict[str, str] = {
 
 # canonical 短名别名：让 build_agent_message / get_agent 既能接受 registry id
 # （如 sophia_ramirez）也能接受短名（sophia），二者指向同一 NPC 配置
+# CANONICAL_NPC_IDS 记录原始 6 个 NPC（供 _cmd_ls 等避免重复显示别名）
+CANONICAL_NPC_IDS: List[str] = list(NPC_REGISTRY.keys())
 for _rid, _npc in list(NPC_REGISTRY.items()):
     _short = AGENT_TO_NPC_ID.get(_rid)
     if _short and _short not in NPC_REGISTRY:
@@ -186,10 +188,14 @@ def handle_command(command: str, args: List[str], agent: Agent) -> Dict:
 
 
 def _cmd_ls() -> Dict:
-    """ls: 列出基地当前可交互的舱室/NPC"""
+    """ls: 列出基地当前可交互的舱室/NPC
+
+    只显示规范的 6 个 NPC（CANONICAL_NPC_IDS），不重复显示短名别名。
+    """
     segments = []
     data_entries = []
-    for npc_id, npc in NPC_REGISTRY.items():
+    for npc_id in CANONICAL_NPC_IDS:
+        npc = NPC_REGISTRY[npc_id]
         line = f"{npc['location']:<12} {npc_id:<16} [{npc['label']}]  在线\n"
         segments.append({"text": line, "protected": True, "tag": "command_response"})
         data_entries.append({
