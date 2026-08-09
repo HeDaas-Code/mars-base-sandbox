@@ -1,0 +1,156 @@
+/* ============================================
+   emotion.css · 情绪视觉层样式 v1.0
+   ------------------------------------------------
+   来源：幻影《emotion_label视觉呈现规范_v1.md》
+     §2.1 压力带主色变量
+     §2.2 morale 滤镜变量
+     §2.3 压力带动效
+     §4.2 情绪层 CSS 类定义
+     §5.2 ai_status 三档
+     §6.2 NPC 状态面板适配
+     §7.3 信号 L4 禁用情绪抖动
+   作用对象：CrewPanel HTML DOM（终端走 ANSI 不走 CSS）
+   ============================================ */
+
+/* === §2.1 五级压力带主色变量 === */
+:root {
+  --emotion-band0: #4a6b7a;  /* 带0 [0.0,0.2) 低压力：灰蓝·静默 */
+  --emotion-band1: #7a8b6b;  /* 带1 [0.2,0.4) 微压力：灰绿·平稳 */
+  --emotion-band2: #ffb347;  /* 带2 [0.4,0.6) 中压力：琥珀·注意 */
+  --emotion-band3: #ff8c42;  /* 带3 [0.6,0.8) 高压力：橙红·警告 */
+  --emotion-band4: #ff4444;  /* 带4 [0.8,1.0] 极限压力：红色·警报 */
+
+  /* === §2.2 morale 滤镜变量 === */
+  --morale-high-filter:   saturate(1.0)  brightness(1.05);
+  --morale-stable-filter: saturate(0.9)  brightness(1.0);
+  --morale-mid-filter:    saturate(0.75) brightness(0.9);
+  --morale-low-filter:    saturate(0.55) brightness(0.75);
+  --morale-floor-filter:  saturate(0.35) brightness(0.6);
+}
+
+/* === §4.2 情绪压力带类（作用于消息/卡片容器） === */
+.emotion-band0 { border-left: 3px solid var(--emotion-band0) !important; }
+.emotion-band1 { border-left: 3px solid var(--emotion-band1) !important; }
+.emotion-band2 { border-left: 3px solid var(--emotion-band2) !important; }
+.emotion-band3 { border-left: 3px solid var(--emotion-band3) !important; }
+.emotion-band4 { border-left: 3px solid var(--emotion-band4) !important; }
+
+/* === §4.2 morale 滤镜类 === */
+.morale-high   .msg-text { filter: var(--morale-high-filter); }
+.morale-stable .msg-text { filter: var(--morale-stable-filter); }
+.morale-mid    .msg-text { filter: var(--morale-mid-filter); }
+.morale-low    .msg-text { filter: var(--morale-low-filter); }
+.morale-floor  .msg-text { filter: var(--morale-floor-filter); }
+
+/* === §4.2 情绪图标 === */
+.emotion-icon {
+  display: inline-block;
+  width: 1.2em;
+  text-align: center;
+  margin: 0 0.3em;
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+.emotion-band3 .emotion-icon { animation: emotion-icon-pulse 0.3s ease-in-out infinite; }
+.emotion-band4 .emotion-icon { animation: emotion-icon-pulse 0.2s ease-in-out infinite; }
+@keyframes emotion-icon-pulse {
+  0%, 100% { opacity: 0.8; }
+  50%      { opacity: 0.3; }
+}
+
+/* === §2.3 压力带动效（作用于文本） === */
+.emotion-band0 .msg-text,
+.emotion-band1 .msg-text,
+.emotion-band2 .msg-text { animation: none; }
+
+/* 带3：文字微颤（0.3s 周期，幅度 0.5px） */
+.emotion-band3 .msg-text {
+  animation: emotion-tremor 0.3s ease-in-out infinite;
+}
+@keyframes emotion-tremor {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(0.5px, -0.3px); }
+}
+
+/* 带4：明显抖动（0.2s 周期，幅度 1px） */
+.emotion-band4 .msg-text {
+  animation: emotion-shake 0.2s linear infinite;
+}
+@keyframes emotion-shake {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-1px, 0.5px); }
+  50%  { transform: translate(1px, -0.5px); }
+  75%  { transform: translate(-0.5px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* === §5.2 ai_status 三档 === */
+.ai-status-normal {
+  border-left: 3px solid var(--ai-athena) !important;
+}
+.ai-status-normal .emotion-icon { color: var(--ai-athena); }
+
+.ai-status-degraded {
+  border-left: 3px solid var(--emotion-band3) !important;
+}
+.ai-status-degraded .emotion-icon {
+  color: var(--emotion-band3);
+  animation: emotion-icon-pulse 2s ease-in-out infinite;  /* 慢闪 */
+}
+/* 注：原 @keyframes ai-slow-blink 已删除（死代码，.ai-status-degraded 实际复用 emotion-icon-pulse） */
+
+.ai-status-offline {
+  border-left: 3px solid #555 !important;
+  opacity: 0.5;
+}
+.ai-status-offline .emotion-icon { color: #555; }
+.ai-status-offline .msg-text { filter: grayscale(0.8) brightness(0.6); }
+
+/* === §6.2 NPC 状态面板（CrewPanel）适配 === */
+.npc-panel-item .emotion-label-text {
+  font-size: 0.75em;
+  opacity: 0.7;
+  margin-left: 0.3em;
+}
+.npc-panel-item.emotion-band3 .emotion-label-text {
+  color: var(--emotion-band3);
+  animation: emotion-label-blink 0.5s ease-in-out infinite;
+}
+.npc-panel-item.emotion-band4 .emotion-label-text {
+  color: var(--emotion-band4);
+  animation: emotion-label-blink 0.5s ease-in-out infinite;
+}
+@keyframes emotion-label-blink {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 0.3; }
+}
+
+/* === §7.3 信号 L4 时禁用情绪抖动 === */
+/* 信号遮罩优先，情绪抖动在遮罩下层 */
+/* 实现：当容器同时具备 .sig-quality-l4 类时，禁用情绪层 transform 动画 */
+.sig-quality-l4 .msg-text { animation: none !important; }
+.sig-quality-l4 .emotion-icon { animation: none !important; }
+
+/* === CrewPanel 卡片情绪显示通用样式 === */
+.crew-item .emotion-icon {
+  display: inline-block;
+  margin-right: 0.3em;
+  opacity: 0.85;
+  font-size: 0.9em;
+}
+.crew-item.emotion-band3 .emotion-icon { animation: emotion-icon-pulse 0.3s ease-in-out infinite; }
+.crew-item.emotion-band4 .emotion-icon { animation: emotion-icon-pulse 0.2s ease-in-out infinite; }
+
+.crew-item .emotion-label-text {
+  font-size: 0.7em;
+  opacity: 0.65;
+  margin-left: 0.2em;
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+}
+.crew-item.emotion-band3 .emotion-label-text { color: var(--emotion-band3); }
+.crew-item.emotion-band4 .emotion-label-text { color: var(--emotion-band4); }
+
+/* AI 卡片状态文字 */
+.crew-item.ai-status-degraded .emotion-label-text { color: var(--emotion-band3); }
+.crew-item.ai-status-offline .emotion-label-text { color: #555; }

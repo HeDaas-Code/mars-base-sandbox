@@ -1,0 +1,227 @@
+/* ============================================
+   终端样式 · xterm.js 定制
+   terra-faction-ui: 克制元数据，氛围层辉光服务于叙事任务
+   信号遮罩保留（承载真实信号质量状态）
+   ============================================ */
+
+/* xterm.js 终端容器 */
+.xterm {
+  height: 100%;
+  padding: 0;
+}
+
+.xterm .xterm-viewport {
+  background-color: var(--field) !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) var(--field);
+}
+
+/* 终端光标样式 */
+.xterm .xterm-cursor {
+  background-color: var(--signal) !important;
+  z-index: 10;
+}
+
+.xterm .xterm-cursor.blink {
+  animation: cursor-blink var(--anim-cursor-blink) infinite step-end;
+}
+
+/* 终端选中样式 */
+.xterm .xterm-selection div {
+  background-color: rgba(200, 146, 73, 0.25) !important;
+}
+
+/* === 信号遮罩字符样式 ===
+   四档遮罩承载真实信号质量状态（非装饰）
+   80%+：正常显示
+   50-79%：偶发缺字 ▓（淡遮罩）
+   20-49%：频繁乱码 ▒▓（重遮罩）
+   0-19%：几乎不可读 */
+.signal-mask-light {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.signal-mask-heavy {
+  color: var(--color-text-secondary);
+  opacity: 0.3;
+  /* 信号干扰抖动（真实信号降级，非装饰） */
+  animation: signal-jitter var(--anim-signal-jitter) infinite alternate;
+}
+
+.signal-mask-unreadable {
+  color: var(--color-text-secondary);
+  opacity: 0.15;
+  animation: signal-jitter 100ms infinite alternate;
+}
+
+/* === NPC 消息样式（标尺式分隔，非圆角卡片） === */
+.npc-msg {
+  margin: 4px 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--rule);
+}
+
+.npc-msg-header {
+  font-size: var(--font-size-status);
+  color: var(--color-text-secondary);
+  margin-bottom: 2px;
+  font-family: var(--font-mono);
+}
+
+.npc-msg-sender {
+  font-weight: bold;
+}
+
+.npc-msg-body {
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.npc-msg-signal-annotation {
+  color: var(--color-signal-blue);
+  opacity: 0.6;
+  font-size: var(--font-size-status);
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === 系统消息样式 === */
+.sys-msg {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-status);
+  margin: 2px 0;
+}
+
+.sys-msg-alert {
+  color: var(--critical);
+}
+
+.sys-msg-alert.glow-critical {
+  text-shadow: 0 0 2px rgba(200, 74, 58, var(--glow-intensity));
+}
+
+.sys-msg-ok {
+  color: var(--status-ok);
+}
+
+.sys-msg-warn {
+  color: var(--status-warn);
+}
+
+.sys-msg-warn.glow-warn {
+  text-shadow: 0 0 2px rgba(200, 146, 73, var(--glow-intensity));
+}
+
+/* === 玩家消息标识 === */
+.player-msg .npc-msg-sender {
+  color: var(--color-signal-blue);
+}
+
+/* === 信号强度四段色块条（直角） === */
+.signal-bars {
+  display: inline-flex;
+  gap: 2px;
+  align-items: flex-end;
+  height: 12px;
+}
+
+.signal-bar {
+  width: 4px;
+  background-color: var(--rule);
+  transition: background-color var(--anim-feedback);
+  border-radius: var(--radius);
+}
+
+.signal-bar:nth-child(1) { height: 25%; }
+.signal-bar:nth-child(2) { height: 50%; }
+.signal-bar:nth-child(3) { height: 75%; }
+.signal-bar:nth-child(4) { height: 100%; }
+
+.signal-bar.lit {
+  background-color: var(--status-ok);
+}
+
+.signal-bar.lit-warn {
+  background-color: var(--status-warn);
+}
+
+.signal-bar.lit-danger {
+  background-color: var(--critical);
+}
+
+/* === 状态指示灯（直角方块，非圆形） === */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius);
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.status-dot.ok { background-color: var(--status-ok); }
+.status-dot.warn { background-color: var(--status-warn); }
+.status-dot.danger {
+  background-color: var(--critical);
+  animation: pulse-danger var(--anim-pulse) infinite;
+}
+.status-dot.offline { background-color: var(--status-offline); }
+.status-dot.unknown {
+  background-color: var(--status-offline);
+  animation: blink-unknown 1.5s infinite;
+}
+.status-dot.emergency {
+  background-color: var(--critical);
+  animation: blink-fast 0.5s infinite;
+}
+
+/* === 警报状态：屏幕边缘红色脉冲（真实警报，非装饰） === */
+.app-container.alert-mode {
+  animation: alert-pulse var(--anim-pulse) infinite;
+}
+
+@keyframes alert-pulse {
+  0%, 100% { box-shadow: inset 0 0 80px rgba(200, 74, 58, 0); }
+  50% { box-shadow: inset 0 0 80px rgba(200, 74, 58, 0.35); }
+}
+
+/* === 信号完全中断状态 === */
+.app-container.signal-lost {
+  background-color: #000;
+}
+
+.app-container.signal-lost .main-area {
+  opacity: 0.1;
+}
+
+/* === 事件流容器（嵌入终端流下方） === */
+.event-stream {
+  max-height: 45vh;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 8px;
+  background-color: var(--field);
+  border-top: 1px dashed var(--rule);
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) var(--field);
+}
+
+.event-stream:empty {
+  display: none;
+}
+
+.event-stream::-webkit-scrollbar {
+  width: 6px;
+}
+
+.event-stream::-webkit-scrollbar-track {
+  background-color: var(--field);
+}
+
+.event-stream::-webkit-scrollbar-thumb {
+  background-color: var(--rule);
+  border-radius: var(--radius);
+}
