@@ -16,6 +16,7 @@ REPO_URL="https://github.com/HeDaas-Code/mars-base-sandbox.git"
 INSTALL_DIR="${HOME}/mars-base-sandbox"
 BRANCH="deploy"
 BACKEND_PORT="${BACKEND_PORT:-8000}"
+NGINX_PORT="${NGINX_PORT:-8080}"
 SERVICE_NAME="mars-signal-backend"
 
 # 检查必要环境变量
@@ -121,6 +122,69 @@ EOF
     sudo systemctl status "${SERVICE_NAME}" --no-pager || true
 }
 
+# 安装并配置 nginx 作为反向代理（处理 HEAD/HTTP 探测、WebSocket 升级）
+install_nginx() {
+    if command -v nginx &> /dev/null; then
+        echo "[INFO] nginx 已安装: $(nginx -v 2>&1 | head -n 1)"
+        return
+    fi
+
+    echo "[INFO] 正在安装 nginx..."
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq nginx
+    echo "[INFO] nginx 安装完成"
+}
+
+setup_nginx() {
+    echo "[INFO] 配置 nginx 反向代理..."
+    local nginx_conf="/etc/nginx/sites-available/mars-signal"
+
+    sudo tee "${nginx_conf}" > /dev/null <<EOF
+server {
+    listen 127.0.0.1:${NGINX_PORT};
+    server_name _;
+
+    # HEAD 请求直接返回 200，不向后端转发
+    if (\$request_method = HEAD) {
+        return 200;
+    }
+
+    location /health {
+        access_log off;
+        return 200 "OK\n";
+    }
+
+    location /ws {
+        proxy_pass http://127.0.0.1:${BACKEND_PORT}/ws;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 86400;
+    }
+
+    location / {
+        access_log off;
+        return 200 "Mars Signal WebSocket Endpoint\nUse a WebSocket client to connect to /ws\nHealth check: /health\n";
+    }
+}
+EOF
+
+    sudo rm -f /etc/nginx/sites-enabled/mars-signal
+    sudo ln -s "${nginx_conf}" /etc/nginx/sites-enabled/mars-signal
+
+    # 确保默认站点不会占用 ${NGINX_PORT}
+    sudo rm -f /etc/nginx/sites-enabled/default
+
+    sudo nginx -t
+    sudo systemctl restart nginx
+    sudo systemctl enable nginx
+    echo "[INFO] nginx 反向代理已启动，监听 127.0.0.1:${NGINX_PORT}"
+}
+
 # 启动 Cloudflare Quick Tunnel（systemd 后台服务，SSH 断开后保持运行）
 start_tunnel() {
     local tunnel_service="mars-signal-tunnel"
@@ -130,13 +194,13 @@ start_tunnel() {
     sudo tee "/etc/systemd/system/${tunnel_service}.service" > /dev/null <<EOF
 [Unit]
 Description=Cloudflare Tunnel for Mars Signal
-After=network.target ${SERVICE_NAME}.service
-Wants=${SERVICE_NAME}.service
+After=network.target nginx.service ${SERVICE_NAME}.service
+Wants=nginx.service ${SERVICE_NAME}.service
 
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/cloudflared tunnel --url http://127.0.0.1:${BACKEND_PORT} --metrics localhost:45678
+ExecStart=/usr/local/bin/cloudflared tunnel --url http://127.0.0.1:${NGINX_PORT} --metrics localhost:45678
 Restart=always
 RestartSec=5
 StandardOutput=append:${log_file}
@@ -172,6 +236,7 @@ EOF
         echo "[OK] 健康检查：${url}/health"
         echo "============================================================"
         echo ""
+        echo "[INFO] nginx 反向代理监听 127.0.0.1:${NGINX_PORT}"
         echo "[INFO] Tunnel 已作为 systemd 服务 '${tunnel_service}' 在后台运行"
         echo "[INFO] SSH 断开后仍然有效"
         echo "[INFO] 查看状态：sudo systemctl status ${tunnel_service}"
@@ -185,7 +250,9 @@ EOF
 
 # 主流程
 install_cloudflared
+install_nginx
 setup_code
 setup_backend
 start_backend_service
+setup_nginx
 start_tunnel

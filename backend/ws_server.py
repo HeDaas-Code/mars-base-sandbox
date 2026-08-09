@@ -584,14 +584,40 @@ async def start_server(host: str = "0.0.0.0", port: int = 8000):
     logger.info("按 Ctrl+C 停止")
     logger.info("=" * 60)
 
-    def health_check(connection, request):
-        """HTTP 健康检查（Koyeb / Render 等 PaaS 需要）"""
+    def process_http_request(connection, request):
+        """HTTP 层预处理：健康检查 + 非 WebSocket 请求优雅降级
+
+        Cloudflare Tunnel / 浏览器 / 监控探针可能会用普通 HTTP 访问 /ws，
+        websockets 库默认会返回 426 Upgrade Required 并抛异常到日志。
+        这里对 /health 返回 200，对不带 Upgrade: websocket 的请求返回说明文本，
+        避免日志被非 WebSocket 探测刷满。
+        """
+        # 健康检查
         if request.path == "/health":
-            return connection.respond(http.HTTPStatus.OK, "OK\n")
+            body = "OK\n"
+            return connection.respond(http.HTTPStatus.OK, body)
+
+        # 非 WebSocket 升级请求：返回友好说明，避免 426 错误
+        upgrade = request.headers.get("Upgrade", "").lower()
+        connection_header = request.headers.get("Connection", "").lower()
+        is_ws_upgrade = (upgrade == "websocket" and "upgrade" in connection_header)
+        if not is_ws_upgrade:
+            body = (
+                "Mars Signal WebSocket Endpoint\n"
+                "Use a WebSocket client to connect to /ws\n"
+                "Health check: /health\n"
+            )
+            return connection.respond(
+                http.HTTPStatus.OK,
+                body,
+                headers=[("Content-Type", "text/plain; charset=utf-8")],
+            )
+
+        # 合法 WebSocket 握手：交给 websockets 库继续处理
         return None
 
     # 启动 WebSocket 服务器
-    async with serve(client_handler, host, port, ping_interval=None, process_request=health_check):
+    async with serve(client_handler, host, port, ping_interval=None, process_request=process_http_request):
         await asyncio.Future()  # 永久阻塞
 
 
