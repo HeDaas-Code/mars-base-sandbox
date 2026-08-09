@@ -121,26 +121,66 @@ EOF
     sudo systemctl status "${SERVICE_NAME}" --no-pager || true
 }
 
-# 启动 Cloudflare Quick Tunnel
+# 启动 Cloudflare Quick Tunnel（systemd 后台服务，SSH 断开后保持运行）
 start_tunnel() {
-    echo "[INFO] 启动 Cloudflare Quick Tunnel，指向 http://127.0.0.1:${BACKEND_PORT}..."
-    echo "[INFO] 请等待 5-10 秒，下面会输出公网 HTTPS URL..."
-    echo ""
+    local tunnel_service="mars-signal-tunnel"
+    local log_file="/var/log/mars-signal-tunnel.log"
 
-    # 用 timeout 限制运行时间，提取 URL 后保持隧道运行
-    cloudflared tunnel --url "http://127.0.0.1:${BACKEND_PORT}" --metrics localhost:45678 2>&1 | \
-    while IFS= read -r line; do
-        echo "${line}"
-        if echo "${line}" | grep -qE "https://[a-z0-9-]+\.trycloudflare\.com"; then
-            url=$(echo "${line}" | grep -oE "https://[a-z0-9-]+\.trycloudflare\.com")
-            echo ""
-            echo "============================================================"
-            echo "[OK] 公网 HTTPS 地址：${url}"
-            echo "[OK] WebSocket 地址：${url}/ws （WSS，可直接填入 GitHub WS_URL）"
-            echo "[OK] 健康检查：${url}/health"
-            echo "============================================================"
+    echo "[INFO] 创建 Cloudflare Tunnel systemd 服务..."
+    sudo tee "/etc/systemd/system/${tunnel_service}.service" > /dev/null <<EOF
+[Unit]
+Description=Cloudflare Tunnel for Mars Signal
+After=network.target ${SERVICE_NAME}.service
+Wants=${SERVICE_NAME}.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/cloudflared tunnel --url http://127.0.0.1:${BACKEND_PORT} --metrics localhost:45678
+Restart=always
+RestartSec=5
+StandardOutput=append:${log_file}
+StandardError=append:${log_file}
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable "${tunnel_service}"
+    # 清空旧日志，确保获取到最新 URL
+    sudo rm -f "${log_file}"
+    sudo systemctl restart "${tunnel_service}"
+
+    echo "[INFO] 等待 Cloudflare Tunnel 启动并获取公网 URL..."
+    local url=""
+    for i in $(seq 1 30); do
+        if sudo test -f "${log_file}"; then
+            url=$(sudo grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" "${log_file}" | head -n 1)
+            if [ -n "${url}" ]; then
+                break
+            fi
         fi
+        sleep 2
     done
+
+    echo ""
+    if [ -n "${url}" ]; then
+        echo "============================================================"
+        echo "[OK] 公网 HTTPS 地址：${url}"
+        echo "[OK] WebSocket 地址：${url}/ws （WSS，可直接填入 GitHub WS_URL）"
+        echo "[OK] 健康检查：${url}/health"
+        echo "============================================================"
+        echo ""
+        echo "[INFO] Tunnel 已作为 systemd 服务 '${tunnel_service}' 在后台运行"
+        echo "[INFO] SSH 断开后仍然有效"
+        echo "[INFO] 查看状态：sudo systemctl status ${tunnel_service}"
+        echo "[INFO] 查看日志：sudo tail -f ${log_file}"
+    else
+        echo "[WARN] 未能自动获取 Tunnel URL"
+        echo "[INFO] 请查看日志：sudo tail -f ${log_file}"
+        echo "[INFO] 或查看服务状态：sudo systemctl status ${tunnel_service}"
+    fi
 }
 
 # 主流程
