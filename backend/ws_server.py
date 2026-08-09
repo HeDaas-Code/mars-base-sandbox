@@ -76,6 +76,25 @@ logging.basicConfig(
 logger = logging.getLogger("ws_server")
 
 # ============================================================
+# 启动时记录 LLM 配置（用于线上排查）
+# ============================================================
+
+from agent.config import config as _startup_config
+
+_key = _startup_config.llm_api_key
+logger.info(
+    "LLM config: base_url=%s, model_deliberate=%s, model_deep=%s, key_set=%s",
+    _startup_config.llm_base_url,
+    _startup_config.model_deliberate,
+    _startup_config.model_deep,
+    bool(_key),
+)
+if _key:
+    logger.info("LLM api_key preview: %s...%s", _key[:8], _key[-4:])
+else:
+    logger.warning("LLM_API_KEY 未设置，自然语言回复将使用 Mock 模式")
+
+# ============================================================
 # 会话管理
 # ============================================================
 
