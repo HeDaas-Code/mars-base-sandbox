@@ -37,6 +37,7 @@ _PROJECT_ROOT: str = os.path.dirname(
 DICT_ROOT: str = os.path.join(_PROJECT_ROOT, "dict")
 CHAPTERS_DIR: str = os.path.join(DICT_ROOT, "chapters")
 BRANCHES_DIR: str = os.path.join(DICT_ROOT, "events", "mainline")
+NPCS_DIR: str = os.path.join(DICT_ROOT, "npcs")
 
 
 # ============================================================
@@ -208,6 +209,80 @@ def extract_branch_events(branch_data: Dict[str, Any]) -> List[Dict[str, Any]]:
             "narrative_function": evt.get("narrative_function", ""),
         })
     return events
+
+
+# ============================================================
+# NPC 人设加载
+# ============================================================
+
+@lru_cache(maxsize=16)
+def load_npc(npc_id: str) -> Optional[Dict[str, Any]]:
+    """加载单个 NPC 的 YAML 人设
+
+    Args:
+        npc_id: NPC 标识（如 chen_hao / sophia）
+
+    Returns:
+        NPC 人设字典，或 None（未找到）
+    """
+    yaml_path = os.path.join(NPCS_DIR, f"npc_{npc_id}.yaml")
+    if not os.path.exists(yaml_path):
+        logger.warning(f"NPC YAML 未找到: {yaml_path}")
+        return None
+    try:
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        logger.debug(f"NPC YAML 加载成功: {npc_id}")
+        return data
+    except yaml.YAMLError as e:
+        logger.error(f"NPC YAML 解析失败 {npc_id}: {e}")
+        return None
+
+
+def load_all_npcs() -> Dict[str, Dict[str, Any]]:
+    """加载全部 NPC 人设
+
+    Returns:
+        {npc_id: npc_data} 字典
+    """
+    result: Dict[str, Dict[str, Any]] = {}
+    if not os.path.isdir(NPCS_DIR):
+        logger.warning(f"NPC 目录不存在: {NPCS_DIR}")
+        return result
+    for fname in sorted(os.listdir(NPCS_DIR)):
+        if not fname.startswith("npc_") or not fname.endswith(".yaml"):
+            continue
+        npc_id = fname[4:-5]  # 去掉 "npc_" 前缀和 ".yaml" 后缀
+        data = load_npc(npc_id)
+        if data is not None:
+            result[npc_id] = data
+    return result
+
+
+def extract_seed_memories(npc_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """从 NPC 人设提取种子记忆列表
+
+    NPC YAML 的 seed_memories 字段结构：
+        - memory_id / type / content / emotional_intensity / event_type / sol
+
+    Returns:
+        种子记忆字典列表，每项补充 agent_id 字段
+    """
+    npc_id = npc_data.get("npc_id", "")
+    memories = []
+    for mem in npc_data.get("seed_memories", []):
+        memories.append({
+            "agent_id": npc_id,
+            "memory_id": mem.get("memory_id", ""),
+            "content": mem.get("content", ""),
+            "memory_type": mem.get("type", "episodic"),
+            "timestamp": f"Sol-{mem.get('sol', 0)}",
+            "importance": mem.get("emotional_intensity", 0.5),  # 用情感强度作为重要性
+            "emotional_intensity": mem.get("emotional_intensity", 0.5),
+            "event_type": mem.get("event_type", "episodic"),
+            "tags": [],
+        })
+    return memories
 
 
 if __name__ == "__main__":

@@ -52,6 +52,14 @@ from agent.game_state import (
     build_emotion_hint,
     AI_SENDERS,
 )
+from agent.protocol import (
+    gen_msg_id as _proto_gen_msg_id,
+    now_ts as _proto_now_ts,
+    build_session_init as _proto_build_session_init,
+    build_error as _proto_build_error,
+    build_pong as _proto_build_pong,
+    build_ack as _proto_build_ack,
+)
 
 # ============================================================
 # 日志配置
@@ -85,15 +93,15 @@ class ClientSession:
 
 
 # ============================================================
-# 消息构造工具
+# 消息构造工具（委托 protocol.py 统一信封中心）
 # ============================================================
 
 def _gen_msg_id() -> str:
-    return f"msg-{uuid.uuid4().hex[:12]}"
+    return _proto_gen_msg_id()
 
 
 def _now_ts() -> int:
-    return int(time.time())
+    return _proto_now_ts()
 
 
 def build_session_init(session: ClientSession) -> Dict:
@@ -122,77 +130,41 @@ def build_session_init(session: ClientSession) -> Dict:
             "current_task": "待命",
         })
 
-    return {
-        "msg_id": _gen_msg_id(),
-        "type": "session_init",
-        "ts_tick": _now_ts(),
-        "payload": {
-            "session_id": session.session_id,
-            "resume_mode": "cold",  # Phase 1 全部走 cold
-            "player_state": {
-                "player_id": session.player_id or "earth_observer_01",
-                "player_name": session.player_name or "观察者",
-                "established_at": "2087-04-15T08:00:00Z",
-                "signal_quality_pct": gs.signal_quality,
-            },
-            "world_snapshot": {
-                "sol": gs.sol,
-                "mars_time": "08:00",
-                "base": {
-                    "name": "赫拉克勒斯-7号基地",
-                    "integrity": 0.78,
-                    "resources": {
-                        "oxygen": {"current": 78, "max": 100, "rate": -0.3},
-                        "power": {"current": 85, "max": 100, "rate": 0.5},
-                        "water": {"current": 65, "max": 100, "rate": -0.1},
-                        "food": {"current": 90, "max": 100, "rate": -0.5},
-                    },
-                    "materials": {
-                        "iron": 24,
-                        "silicon": 12,
-                        "carbon": 5,
-                    },
-                },
-                "agents": agents_list,
-            },
-            "signal_quality_pct": gs.signal_quality,
-        },
-    }
+    # 构造资源字典（从 GameState 动态取值，而非硬编码）
+    resources = {}
+    for res_name in ("oxygen", "power", "water", "food"):
+        res = gs.resources.get(res_name)
+        if isinstance(res, dict):
+            resources[res_name] = {
+                "current": res.get("current", 0),
+                "max": res.get("max", 100),
+                "rate": res.get("rate", 0),
+            }
+
+    return _proto_build_session_init(
+        session_id=session.session_id,
+        player_id=session.player_id or "earth_observer_01",
+        player_name=session.player_name or "观察者",
+        signal_quality_pct=gs.signal_quality,
+        sol=gs.sol,
+        agents_list=agents_list,
+        resources=resources,
+    )
 
 
 def build_error_message(code: str, message: str) -> Dict:
-    """构造 error 消息"""
-    return {
-        "msg_id": _gen_msg_id(),
-        "type": "error",
-        "ts_tick": _now_ts(),
-        "payload": {
-            "code": code,
-            "message": message,
-        },
-    }
+    """构造 error 消息（委托 protocol.py）"""
+    return _proto_build_error(code, message)
 
 
 def build_pong() -> Dict:
-    """构造 pong 消息"""
-    return {
-        "msg_id": _gen_msg_id(),
-        "type": "pong",
-        "ts_tick": _now_ts(),
-        "payload": {},
-    }
+    """构造 pong 消息（委托 protocol.py）"""
+    return _proto_build_pong()
 
 
 def build_ack(acked_msg_id: str) -> Dict:
-    """构造 ack 消息"""
-    return {
-        "msg_id": _gen_msg_id(),
-        "type": "ack",
-        "ts_tick": _now_ts(),
-        "payload": {
-            "acked_msg_id": acked_msg_id,
-        },
-    }
+    """构造 ack 消息（委托 protocol.py）"""
+    return _proto_build_ack(acked_msg_id)
 
 
 # ============================================================

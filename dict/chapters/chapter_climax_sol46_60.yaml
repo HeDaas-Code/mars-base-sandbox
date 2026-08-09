@@ -182,11 +182,11 @@ temporary_keywords:
     trigger:
       trigger_id: tr_clx_007_npc_psychological_breakdown_threshold
       trigger_type: state_match
-      condition: "sol >= 50 and (any_npc_stress > 80 or any_npc_morale < 30)"
+      condition: "sol >= 50 and (stress_avg > 0.8 or morale_avg < 0.3)"
     ttl:
       expire_type: on_state_change
       expire_condition: "ending_triggered == true"
-    description: "NPC 心理崩溃临界——压力 >80 触发心理危机事件，士气 <30 进入消沉"
+    description: "NPC 心理崩溃临界——压力 >0.8 触发心理危机事件，士气 <0.3 进入消沉"
     bound_state:
       - state: npc_psychology
         monitor: [stress, morale, trust, fatigue]
@@ -205,7 +205,7 @@ temporary_keywords:
     trigger:
       trigger_id: tr_clx_008_final_choice_sacrifice_npc
       trigger_type: sol_reached
-      condition: "sol == 52 and (branch_choice == D or any_npc_morale < 10)"
+      condition: "sol == 52 and (branch_choice == D or morale_avg < 0.1)"
     ttl:
       expire_type: on_event
       expire_condition: "sacrifice_decision == made"

@@ -24,6 +24,10 @@ from agent.game_state import (
     build_emotion_hint,
     AI_SENDERS,
 )
+from agent.protocol import (
+    build_agent_message as _proto_agent_message,
+    build_command_response as _proto_command_response,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -246,16 +250,8 @@ def _cmd_help() -> Dict:
 
 
 def _build_command_response(segments: List[Dict], data: Optional[Dict]) -> Dict:
-    """构造 command_response 消息信封"""
-    return {
-        "msg_id": f"msg-{uuid.uuid4().hex[:8]}",
-        "type": "command_response",
-        "ts_tick": int(time.time()),
-        "payload": {
-            "output_segments": segments,
-            "data": data,
-        },
-    }
+    """构造 command_response 消息信封（委托 protocol.py）"""
+    return _proto_command_response(segments, data)
 
 
 # ============================================================
@@ -309,7 +305,7 @@ def build_agent_message(
     emotion_hint: Optional[Dict] = None,
     signal_quality_pct: int = 85,
 ) -> Dict:
-    """构造 v1.1 agent_message 消息信封
+    """构造 v1.1 agent_message 消息信封（委托 protocol.py）
 
     Args:
         agent_id: NPC 的 agent_id
@@ -317,32 +313,16 @@ def build_agent_message(
         latency_ms: 响应延迟（毫秒）
         emotion_hint: 情绪提示 {stress, morale}
         signal_quality_pct: 信号质量 0-100
-
-    Returns:
-        v1.1 agent_message 消息信封
     """
     npc = NPC_REGISTRY.get(agent_id, NPC_REGISTRY["chen_hao"])
-
-    # 将纯文本拆分为 segments
-    # Phase 1: 简单拆分——speaker_label + 正文
-    segments = [
-        {"text": f"[{npc['label']}]> ", "protected": True, "tag": "speaker_label"},
-        {"text": response_text, "protected": False, "tag": "speech"},
-    ]
-
-    return {
-        "msg_id": f"msg-{uuid.uuid4().hex[:8]}",
-        "type": "agent_message",
-        "ts_tick": int(time.time()),
-        "payload": {
-            "sender_id": agent_id,
-            "sender_label": npc["label"],
-            "segments": segments,
-            "signal_quality_pct": signal_quality_pct,
-            "latency_ms": latency_ms,
-            "emotion_hint": emotion_hint,
-        },
-    }
+    return _proto_agent_message(
+        agent_id=agent_id,
+        sender_label=npc["label"],
+        response_text=response_text,
+        latency_ms=latency_ms,
+        emotion_hint=emotion_hint,
+        signal_quality_pct=signal_quality_pct,
+    )
 
 
 def build_context_summary(

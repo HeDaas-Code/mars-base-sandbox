@@ -258,16 +258,25 @@ SEED_MEMORIES_ALL = (
 def seed_all_memories(store) -> int:
     """向 MemoryStore 写入全部 6 个 NPC 的种子记忆
 
+    优先从 NPC YAML（dict/npcs/*.yaml）的 seed_memories 字段加载；
+    若 YAML 加载失败，回退到本文件硬编码的 SEED_MEMORIES_ALL（向后兼容）。
+
     Args:
         store: MemoryStore 实例
 
     Returns:
         新写入的记忆条数（跳过已有记忆的 agent，避免重复）
     """
+    # 优先从 YAML 加载
+    memories = _load_seed_memories_from_yaml()
+    if not memories:
+        # 回退到硬编码数据
+        memories = SEED_MEMORIES_ALL
+
     added = 0
     # 按 agent 分组
     by_agent: dict = {}
-    for mem in SEED_MEMORIES_ALL:
+    for mem in memories:
         by_agent.setdefault(mem["agent_id"], []).append(mem)
 
     for aid, mems in by_agent.items():
@@ -284,8 +293,32 @@ def seed_all_memories(store) -> int:
                 memory_type=mem["memory_type"],
                 timestamp=mem["timestamp"],
                 importance=mem["importance"],
-                tags=mem["tags"].split(","),
+                tags=mem.get("tags", []),
+                emotional_intensity=mem.get("emotional_intensity", 0.5),
+                event_type=mem.get("event_type", "episodic"),
+                memory_id=mem.get("memory_id") or None,
             )
             added += 1
     return added
+
+
+def _load_seed_memories_from_yaml() -> list:
+    """从 NPC YAML 加载全部种子记忆
+
+    Returns:
+        种子记忆列表；加载失败返回空列表（触发调用方回退到硬编码）
+    """
+    try:
+        from agent.chapter_loader import load_all_npcs, extract_seed_memories
+        all_npcs = load_all_npcs()
+        memories = []
+        for npc_id, npc_data in all_npcs.items():
+            memories.extend(extract_seed_memories(npc_data))
+        return memories
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(
+            f"从 NPC YAML 加载种子记忆失败，回退到硬编码: {e}"
+        )
+        return []
 

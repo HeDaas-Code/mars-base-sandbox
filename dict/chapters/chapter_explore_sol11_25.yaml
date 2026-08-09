@@ -99,7 +99,7 @@ temporary_keywords:
     trigger:
       trigger_id: tr_exp_002_chen_linruoxi_old_grudge
       trigger_type: state_match
-      condition: "sol >= 15 and linruoxi_self_blame == active and chen_hao_stress > 50"
+      condition: "sol >= 15 and linruoxi_self_blame == active and chen_hao_stress > 0.5"
     ttl:
       expire_type: on_event
       expire_condition: "conflict_chen_linruoxi_resolved == true or sol >= 22"

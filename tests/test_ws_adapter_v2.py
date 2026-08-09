@@ -11,7 +11,7 @@ if os.path.exists(config.chroma_persist_dir):
 import agent.memory as mem_module
 mem_module._memory_store = None
 
-from ws_adapter import process_input, build_agent_message, build_context_summary
+from ws_adapter_v2 import process_input, build_agent_message, build_context_summary
 
 
 print("=== 1. ls 命令 ===\n")
@@ -123,7 +123,7 @@ print(f"✓ build_context_summary deep: {cs2}")
 # ============================================================
 
 print("\n=== 11. emotion_label 派生验证（人类 NPC）===\n")
-from ws_adapter import get_game_state, AGENT_TO_NPC_ID
+from ws_adapter_v2 import get_game_state, AGENT_TO_NPC_ID
 from agent.game_state import build_emotion_hint, derive_emotion_label, AI_SENDERS
 
 gs = get_game_state()

@@ -345,8 +345,8 @@ class EventScheduler:
         }
 
         # NPC 状态（点号风格 + 下划线风格）
-        # stress/morale 存储为 0-1 浮点，YAML condition 使用 0-100 量纲（如 stress > 50）
-        # 因此下划线风格的 *_stress/*_morale 乘以 100 传递
+        # 量纲统一：stress/morale/energy 全部使用 0-1 浮点（与 NPC YAML state_machine 对齐）
+        # trust_in_player 使用 0-100 整数（与 YAML condition 和 emotional delta 对齐）
         for npc_id, npc in gs.npc_states.items():
             npc_dict = {
                 "stress": npc.stress,
@@ -357,8 +357,8 @@ class EventScheduler:
                 "current_state": npc.current_state,
             }
             ctx[npc_id] = npc_dict
-            ctx[f"{npc_id}_stress"] = round(npc.stress * 100)
-            ctx[f"{npc_id}_morale"] = round(npc.morale * 100)
+            ctx[f"{npc_id}_stress"] = npc.stress
+            ctx[f"{npc_id}_morale"] = npc.morale
             ctx[f"{npc_id}_trust"] = npc.trust_in_player
             ctx[f"{npc_id}_energy"] = npc.energy
             ctx[f"{npc_id}_current_state"] = npc.current_state

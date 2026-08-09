@@ -20,8 +20,6 @@
 from __future__ import annotations
 
 import logging
-import time
-import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
 from .game_state import (
@@ -35,6 +33,15 @@ from .game_state import (
     apply_sol_decay,
 )
 from .event_scheduler import EventScheduler, ActiveEvent
+from .condition import evaluate_condition
+from .protocol import (
+    build_command_response as _proto_command_response,
+    build_system_message as _proto_system_message,
+    build_story_event as _proto_story_event,
+    build_option_result as _proto_option_result,
+    build_option_result_error as _proto_option_result_error,
+    seg as _proto_seg,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,14 +80,16 @@ _NPC_DISPLAY = {
 }
 
 # 结局简表（climax §5.6）：condition → ending_id
-# condition 用 game_loop 上下文求值；命中即终局
+# 数据驱动：condition 为声明式布尔表达式字符串，由 condition.evaluate_condition 求值
+# 命中即终局；按列表顺序评估，首个命中者生效
+# Phase 2 引擎化后可从题材包 YAML 加载此表
 _ENDING_TABLE = [
-    # (ending_id, display_name, condition_func)
-    ("E7_athena_awakening", "E7 雅典娜觉醒", lambda c: c.get("athena_consciousness_flag") == "awakening"),
-    ("E1_hercules_return", "E1 赫拉克勒斯归航", lambda c: c.get("all_crew_alive", True) and c.get("sol", 0) >= 60 and c.get("oxygen", 0) > 30),
-    ("E5_last_signal", "E5 最后的信号", lambda c: c.get("oxygen", 0) <= 0),
-    ("E6_collapse", "E6 守墓人", lambda c: c.get("morale_avg", 1) < 0.2),
-    ("E2_mars_child", "E2 火星之子", lambda c: c.get("greenhouse_status") == "built"),
+    # (ending_id, display_name, condition_str)
+    ("E7_athena_awakening", "E7 雅典娜觉醒", 'athena_consciousness_flag == "awakening"'),
+    ("E1_hercules_return", "E1 赫拉克勒斯归航", "all_crew_alive == true and sol >= 60 and oxygen > 30"),
+    ("E5_last_signal", "E5 最后的信号", "oxygen <= 0"),
+    ("E6_collapse", "E6 守墓人", "morale_avg < 0.2"),
+    ("E2_mars_child", 'E2 火星之子', 'greenhouse_status == "built"'),
 ]
 
 
@@ -496,36 +505,33 @@ class GameLoop:
     def _check_ending(self) -> Optional[Dict[str, Any]]:
         """检查是否命中结局
 
+        使用 condition.evaluate_condition 对数据驱动的 _ENDING_TABLE 求值。
+
         Returns:
             {ending_id, display_name} 或 None
         """
         ctx = self._build_condition_context()
-        for ending_id, display_name, cond_fn in _ENDING_TABLE:
+        for ending_id, display_name, cond_str in _ENDING_TABLE:
             try:
-                if cond_fn(ctx):
+                if evaluate_condition(cond_str, ctx):
                     logger.info(f"结局命中: {ending_id}")
                     return {"ending_id": ending_id, "display_name": display_name}
-            except Exception as e:
+            except (ValueError, SyntaxError, TypeError) as e:
                 logger.warning(f"结局判定异常 {ending_id}: {e}")
         return None
 
     # --------------------------------------------------------
-    # 内部：消息信封构建
+    # 内部：消息信封构建（委托 protocol.py 统一构造中心）
     # --------------------------------------------------------
 
     def _seg(self, text: str, protected: bool = True) -> Dict[str, str]:
-        return {"text": text, "protected": protected, "tag": "command_response"}
+        return _proto_seg(text, protected=protected)
 
     def _build_command_response(self, segments: List[Dict], data: Optional[Dict]) -> Dict[str, Any]:
-        return {
-            "msg_id": f"msg-{uuid.uuid4().hex[:8]}",
-            "type": "command_response",
-            "ts_tick": int(time.time()),
-            "payload": {"output_segments": segments, "data": data},
-        }
+        return _proto_command_response(segments, data)
 
     def _build_system_message(self, text: str) -> Dict[str, Any]:
-        return self._build_command_response([self._seg(text)], None)
+        return _proto_system_message(text)
 
     def _build_story_event(self, event: ActiveEvent) -> Dict[str, Any]:
         """构建 story_event 信封（v1.2 §11 S→C）"""
@@ -536,22 +542,18 @@ class GameLoop:
                 "label": opt.get("label", f"选项{i+1}"),
                 "visible": True,
             })
-        return {
-            "msg_id": f"msg-{uuid.uuid4().hex[:8]}",
-            "type": "story_event",
-            "ts_tick": int(time.time()),
-            "payload": {
-                "event_id": event.event_id,
-                "chapter_id": self.scheduler.chapter.stage_id,
-                "node_index": event.sol,
-                "title": event.title or _NPC_DISPLAY.get(event.npc, "事件"),
-                "npc": event.npc or event.proposed_by or "athena",
-                "description": event.description,
-                "options": options,
-                "signal_quality_pct": self.game_state.signal_quality,
-                "latency_ms": 500 + (100 - self.game_state.signal_quality) * 50,
-            },
-        }
+        sq = self.game_state.signal_quality
+        return _proto_story_event(
+            event_id=event.event_id,
+            chapter_id=self.scheduler.chapter.stage_id,
+            node_index=event.sol,
+            title=event.title or _NPC_DISPLAY.get(event.npc, "事件"),
+            npc=event.npc or event.proposed_by or "athena",
+            description=event.description,
+            options=options,
+            signal_quality_pct=sq,
+            latency_ms=500 + (100 - sq) * 50,
+        )
 
     def _build_option_result(
         self,
@@ -562,34 +564,19 @@ class GameLoop:
         ending: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """构建 option_result 信封（v1.2 §11 S→C）"""
-        payload: Dict[str, Any] = {
-            "event_id": event_id,
-            "option_id": option_id,
-            "selected_option_id": option_id,
-            "effects_summary": result.get("effects_summary", "") or f"已选择: {result.get('option_label', '')}",
-            "state_update": [],
-            "signal_quality_pct": self.game_state.signal_quality,
-        }
-        if leads_to:
-            payload["leads_to"] = leads_to
-        if ending:
-            payload["ending"] = ending
-        return {
-            "msg_id": f"msg-{uuid.uuid4().hex[:8]}",
-            "type": "option_result",
-            "ts_tick": int(time.time()),
-            "payload": payload,
-        }
+        effects_summary = result.get("effects_summary", "") or f"已选择: {result.get('option_label', '')}"
+        return _proto_option_result(
+            event_id=event_id,
+            option_id=option_id,
+            effects_summary=effects_summary,
+            signal_quality_pct=self.game_state.signal_quality,
+            leads_to=leads_to,
+            ending=ending,
+        )
 
     def _build_option_result_error(self, event_id: str, reason: str) -> Dict[str, Any]:
-        return {
-            "msg_id": f"msg-{uuid.uuid4().hex[:8]}",
-            "type": "option_result",
-            "ts_tick": int(time.time()),
-            "payload": {
-                "event_id": event_id,
-                "effects_summary": f"[错误] {reason}",
-                "state_update": [],
-                "signal_quality_pct": self.game_state.signal_quality,
-            },
-        }
+        return _proto_option_result_error(
+            event_id=event_id,
+            reason=reason,
+            signal_quality_pct=self.game_state.signal_quality,
+        )
