@@ -19,6 +19,7 @@ WebSocket 联调服务器 v1.0
 """
 
 import asyncio
+import http
 import json
 import logging
 import time
@@ -33,7 +34,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
     import websockets
-    from websockets.server import serve
+    from websockets.asyncio.server import serve
 except ImportError:
     print("[FATAL] websockets 库未安装。请运行: pip install websockets")
     sys.exit(1)
@@ -564,8 +565,14 @@ async def start_server(host: str = "0.0.0.0", port: int = 8000):
     logger.info("按 Ctrl+C 停止")
     logger.info("=" * 60)
 
+    def health_check(connection, request):
+        """HTTP 健康检查（Koyeb / Render 等 PaaS 需要）"""
+        if request.path == "/health":
+            return connection.respond(http.HTTPStatus.OK, "OK\n")
+        return None
+
     # 启动 WebSocket 服务器
-    async with serve(client_handler, host, port, ping_interval=None):
+    async with serve(client_handler, host, port, ping_interval=None, process_request=health_check):
         await asyncio.Future()  # 永久阻塞
 
 
