@@ -13,8 +13,20 @@
 - **情感指令系统**：`#soothe` / `#empathize` / `#command` / `#blame` / `#smalltalk` 前缀影响 NPC 心理状态
 - **4 分支 × 19 事件节点**：地球救援 / 自力更生 / 科学发现 / 人性考验，多结局叙事
 - **WebSocket 实时通信**：终端式前端，支持 `agent_message` / `story_event` / `option_result` / `command_response` 消息协议
-- **terra-faction-ui 视觉风格**：冷暗工业风，全直角 + 右上切角 + 平面/标尺分隔，移除 CRT 辉光/扫描线装饰
+- **terra-faction-ui 视觉风格**：冷暗工业风，全直角 + 右上切角 + 平面/标尺分隔，可控 CRT 扫描线/文字辉光氛围层
 - **ChromaDB 向量记忆**：NPC 种子记忆 + 对话记忆压缩 + 语义检索召回
+
+---
+
+## 界面展示
+
+### 启动界面
+
+![启动界面](docs/images/mars-signal-boot-screen.png)
+
+### 主界面
+
+![主界面](docs/images/mars-signal-main-interface.png)
 
 ---
 
