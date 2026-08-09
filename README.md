@@ -13,6 +13,7 @@
 - **情感指令系统**：`#soothe` / `#empathize` / `#command` / `#blame` / `#smalltalk` 前缀影响 NPC 心理状态
 - **4 分支 × 19 事件节点**：地球救援 / 自力更生 / 科学发现 / 人性考验，多结局叙事
 - **WebSocket 实时通信**：终端式前端，支持 `agent_message` / `story_event` / `option_result` / `command_response` 消息协议
+- **terra-faction-ui 视觉风格**：冷暗工业风，全直角 + 右上切角 + 平面/标尺分隔，移除 CRT 辉光/扫描线装饰
 - **ChromaDB 向量记忆**：NPC 种子记忆 + 对话记忆压缩 + 语义检索召回
 
 ---
@@ -56,10 +57,11 @@
 │   ├── ws/                     # WebSocket 客户端
 │   └── preview/                # 预览页面
 ├── dict/                       # 游戏数据（YAML）
-│   ├── SCHEMA.md               # 数据格式说明
-│   ├── chapters/               # 章节字典（4 章）
-│   ├── events/mainline/        # 主线事件分支（4 分支）
-│   └── npcs/                   # NPC 人设（6 个）
+│   └── theme_mars_base/        # 项目固定配置包（单一题材，不支持主题切换）
+│       ├── SCHEMA.md           # 数据格式说明
+│       ├── chapters/           # 章节字典（4 章）
+│       ├── events/mainline/    # 主线事件分支（4 分支）
+│       └── npcs/               # NPC 人设（6 个）
 ├── tests/                      # 测试文件
 ├── prototype/                  # 历史原型代码
 └── docs/                       # 项目文档
@@ -94,6 +96,8 @@ export LLM_BASE_URL="http://your-api-endpoint/v1"  # 可选，默认 MiniMax 兼
 cd backend
 python ws_server.py --port 8000
 ```
+
+> 注：`ws_server.py` 已移除 `--theme` 参数，启动时自动加载固定配置 `dict/theme_mars_base`。引擎化是为了单一项目的数据驱动开发，不支持主题切换。
 
 ### 启动前端
 

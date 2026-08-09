@@ -6,6 +6,36 @@
 
 ## [Unreleased]
 
+### Changed (2026-08-09 — 幻影 / 锐锋)
+
+- **前端 UI 按 terra-faction-ui 设计语言全面重设计**
+  - 全直角几何（`--radius: 0`），移除所有面板/按钮/指示灯的圆角
+  - 引入语义化 CSS 变量：`--field`/`--ink`/`--surface`/`--rule`/`--signal`
+  - 面板标题使用右上 45° 切角（`clip-path`）+ 左侧信号条
+  - 状态指示灯改为直角方块，信号条改为直角分段色块
+  - 进度条使用纯色填充 + 刻度标尺，替代渐变 chrome
+  - 数值统一使用 `font-variant-numeric: tabular-nums`
+  - 移除全局 CRT 扫描线、文字辉光、装饰性噪点层
+  - 结局/事件使用单次承诺动画，禁用无限辉光/装饰闪烁
+  - 添加焦点轮廓（2px + offset）与 `prefers-reduced-motion` 降级
+  - 涉及文件：`frontend/styles/variables.css`, `base.css`, `panels.css`, `terminal.css`, `animations.css`, `event-panel.css`
+
+- **修复引擎化过程中的错误设计**
+  - 明确引擎化目的：从"多题材/主题切换"修正为"单一固定配置的数据驱动，便于进一步开发"
+  - `ws_server.py` 移除 `--theme` 参数，硬编码加载 `dict/theme_mars_base`
+  - 删除 `dict/theme_deep_space_station/` 多题材示例（7 个文件）
+  - `.gitignore` 排除测试运行产物：`tests/playthrough_log.json`, `tests/playthrough_report.md`
+
+- **文档同步更新**
+  - 《视觉与界面概念设计方案 v2.1》：风格关键词改为"冷暗工业 / 功能至上"，配色改为语义化变量
+  - 《前端视觉规范 — CSS 参数表》：全面更新为 terra-faction-ui 规范
+  - 《项目架构与引擎化分析报告》：修正引擎化目的、迁移路线，排除多题材/主题切换
+
+### Verified
+
+- 全流程游玩测试通过（`tests/test_full_playthrough.py`）：112 步，0 ERROR / 0 WARN / 0 INFO
+- 重构前后游玩感觉不变
+
 ### Added (2026-08-04 — 锐锋)
 
 - 实现 7 阶段 FSM 游戏主循环 (`game_loop.py`)
