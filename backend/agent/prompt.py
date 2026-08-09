@@ -1,17 +1,36 @@
 """
 NPC 人格 Prompt 统一入口
 
-- chen_hao: 保留原 str.format 模板（{game_state}）
-- sophia / viktor / aisha / marcus / lin_ruoxi: 来自 npc_prompts.py 的 Jinja2 模板
-  （注入 stress/morale/trust_in_player/stage/recent_events）
+Phase 2 引擎化：
+- 优先使用注入的 PersonaRegistry（从 NPC YAML persona_prompt 加载）
+- 回退到 npc_prompts.py 的硬编码模板
+- chen_hao 保留原 str.format 模板（{game_state}）
 
 graph.py 的 generate_response 调用 get_system_prompt(agent_id, game_state, npc_state_vars)
 即可获得正确人格。npc_state_vars 由 game_loop / ws_adapter 从 GameState.npc_states 派生。
 """
 
+import logging
 from typing import Optional, Dict
 
 from .npc_prompts import get_npc_system_prompt, NPC_PROMPT_MAP
+
+logger = logging.getLogger(__name__)
+
+
+# 全局 PersonaRegistry 实例（可选，由 EngineCore 注入）
+_persona_registry = None
+
+
+def set_persona_registry(registry) -> None:
+    """注入 PersonaRegistry（由 EngineCore.init 调用）"""
+    global _persona_registry
+    _persona_registry = registry
+
+
+def get_persona_registry():
+    """获取已注入的 PersonaRegistry（可能为 None）"""
+    return _persona_registry
 
 
 CHEN_HAO_SYSTEM_PROMPT = """你是陈昊（Dr. Chen Hao），赫拉克勒斯-7号火星基地的任务指挥官。
@@ -61,6 +80,8 @@ def get_system_prompt(
 ) -> str:
     """获取指定 Agent 的 System Prompt
 
+    Phase 2 引擎化：优先走 PersonaRegistry，回退到硬编码模板。
+
     Args:
         agent_id: NPC 标识（chen_hao / sophia / viktor / aisha / marcus / lin_ruoxi）
         game_state: 游戏状态上下文字符串（追加到 prompt 末尾）
@@ -68,19 +89,28 @@ def get_system_prompt(
             缺省时用空值渲染（退化但可用）。建议传入：
             {stress, morale, trust_in_player, stage, recent_events}
     """
+    state_vars = dict(npc_state_vars or {})
+
+    # 优先走 PersonaRegistry（Phase 2，从 NPC YAML 加载）
+    if _persona_registry is not None and _persona_registry.has(agent_id):
+        try:
+            persona = _persona_registry.render(agent_id, **state_vars)
+            if game_state:
+                return f"{persona}\n\n## 当前游戏状态\n{game_state}"
+            return persona
+        except Exception as e:
+            logger.warning(f"PersonaRegistry render '{agent_id}' 失败: {e}, 回退到硬编码")
+
+    # 回退：chen_hao 走 str.format
     if agent_id == "chen_hao":
         return CHEN_HAO_SYSTEM_PROMPT.format(game_state=game_state)
 
-    # 其余 5 个 NPC 走 Jinja2 模板
+    # 回退：其余 5 个 NPC 走 npc_prompts.py 的 Jinja2 模板
     if agent_id not in NPC_PROMPT_MAP:
         # 未知 agent_id 兜底：用陈昊模板，避免 KeyError 中断链路
         return CHEN_HAO_SYSTEM_PROMPT.format(game_state=game_state)
 
-    # 渲染 NPC 人格模板（npc_state_vars 缺省时 Jinja2 Undefined 渲染为空串）
-    state_vars = dict(npc_state_vars or {})
     persona = get_npc_system_prompt(agent_id, **state_vars)
-
-    # 追加游戏状态上下文
     if game_state:
         return f"{persona}\n\n## 当前游戏状态\n{game_state}"
     return persona

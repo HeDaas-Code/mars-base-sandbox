@@ -577,3 +577,44 @@ def handle_option_select(event_id: str, option_id: str,
     """option_select 入口（B 计划 v1.2 §11.4 C→S）"""
     gl = get_game_loop()
     return gl.handle_option_select(event_id, option_id, followup_id)
+
+
+# ============================================================
+# EngineCore 集成（Phase 3 引擎化：可选注入）
+# ============================================================
+
+# 全局 EngineCore 单例（可选，由 ws_server 在启动时注入）
+_engine_core = None
+
+
+def set_engine_core(engine) -> None:
+    """注入 EngineCore 实例（Phase 3 引擎化）
+
+    一旦注入，build_session_init 会通过 EngineCore.get_theme_meta() 获取主题元信息，
+    注入到 world_snapshot.theme 字段供前端动态渲染。
+    同时 EngineCore 内部的 GameLoop 会替换 ws_adapter_v2 的 _game_loop 单例。
+    """
+    global _engine_core, _game_loop
+    _engine_core = engine
+    if engine is not None and engine.game_loop is not None:
+        _game_loop = engine.game_loop
+        # 同步 GameState 单例
+        global _game_state
+        _game_state = engine.game_state
+    logger.info("EngineCore 已注入 ws_adapter_v2: theme=%s",
+                engine.theme_bundle.theme_id if engine and engine.theme_bundle else "default")
+
+
+def get_engine_core():
+    """获取已注入的 EngineCore 实例（可能为 None）"""
+    return _engine_core
+
+
+def get_theme_meta_if_available() -> Optional[Dict]:
+    """如果 EngineCore 已注入，返回主题元信息；否则返回 None"""
+    if _engine_core is not None and _engine_core.is_initialized:
+        try:
+            return _engine_core.get_theme_meta()
+        except Exception as e:
+            logger.warning("get_theme_meta 失败: %s", e)
+    return None

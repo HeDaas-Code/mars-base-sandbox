@@ -1,0 +1,72 @@
+# ============================================================
+# 题材包清单：赫拉克勒斯协议（火星基地）
+# 引擎化 Phase 3 - 题材包独立化
+# 作者：锐锋-核心开发工程师  日期：2026-08-09
+# ============================================================
+
+theme_id: mars_base_hercules
+theme_name: 赫拉克勒斯协议
+theme_name_en: Mars Base Hercules Protocol
+engine_version: ">=1.0"
+version: "1.0"
+author: 蔚蓝 + 锐锋
+description: |
+  地球观察者 ↔ 火星基地的对话式叙事生存游戏。
+  玩家通过 WebSocket 终端与 6 名 NPC + 2 个 AI 系统通信，
+  推进 Sol（火星日）周期、管理资源、触发剧情分支、达成多结局。
+
+# 数据目录（相对于本文件）
+# 物理路径仍指向 dict/ 下既有数据，实现渐进式迁移
+data_root: ".."
+chapters_dir: "chapters"
+branches_dir: "events/mainline"
+npcs_dir: "npcs"
+templates_dir: ""  # 暂用 NPC YAML 内嵌 persona_prompt
+
+# 配置文件
+config_path: "config.yaml"
+
+# 题材元信息
+meta:
+  # NPC 显示名映射（供前端动态渲染）
+  npc_display_names:
+    chen_hao: 陈昊
+    sophia: 索菲亚
+    viktor: 维克托
+    aisha: 艾莎
+    marcus: 马库斯
+    lin_ruoxi: 林若曦
+    athena: 雅典娜
+    courier: 信使
+
+  # NPC 角色标签
+  npc_labels:
+    chen_hao: CMDR
+    sophia: BIO
+    viktor: ENG
+    aisha: COMM
+    marcus: MED
+    lin_ruoxi: ATM
+
+  # NPC 默认位置
+  npc_locations:
+    chen_hao: 指挥舱
+    sophia: 生物实验室
+    viktor: 工程舱
+    aisha: 通信舱
+    marcus: 医疗舱
+    lin_ruoxi: 气象观测站
+
+  # AI sender（不进入 npc_states）
+  ai_senders:
+    - athena
+    - courier
+
+  # 起始章节
+  start_stage: survival
+
+  # 主题视觉（前端可读）
+  visual_theme:
+    primary_color: "#e94560"
+    background: "#0a0a1a"
+    terminal_font: "monospace"

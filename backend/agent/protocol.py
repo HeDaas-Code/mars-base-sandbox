@@ -186,8 +186,28 @@ def build_session_init(
     agents_list: List[Dict[str, Any]],
     resources: Optional[Dict[str, Dict]] = None,
     base_integrity: float = 0.78,
+    base_name: str = "赫拉克勒斯-7号基地",
+    mars_time: str = "08:00",
+    theme_meta: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """构造 session_init 信封（v1.1 §3.2）"""
+    """构造 session_init 信封（v1.1 §3.2）
+
+    Args:
+        theme_meta: 题材元信息（由 EngineCore.get_theme_meta() 提供），
+            缺省时 world_snapshot 不含 theme 字段（向后兼容）。
+    """
+    world_snapshot: Dict[str, Any] = {
+        "sol": sol,
+        "mars_time": mars_time,
+        "base": {
+            "name": base_name,
+            "integrity": base_integrity,
+            "resources": resources or {},
+        },
+        "agents": agents_list,
+    }
+    if theme_meta is not None:
+        world_snapshot["theme"] = theme_meta
     return _envelope("session_init", {
         "session_id": session_id,
         "resume_mode": "cold",
@@ -197,16 +217,7 @@ def build_session_init(
             "established_at": "2087-04-15T08:00:00Z",
             "signal_quality_pct": signal_quality_pct,
         },
-        "world_snapshot": {
-            "sol": sol,
-            "mars_time": "08:00",
-            "base": {
-                "name": "赫拉克勒斯-7号基地",
-                "integrity": base_integrity,
-                "resources": resources or {},
-            },
-            "agents": agents_list,
-        },
+        "world_snapshot": world_snapshot,
         "signal_quality_pct": signal_quality_pct,
     })
 

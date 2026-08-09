@@ -312,6 +312,11 @@ class GameState:
     sol_success_progress: bool = False  # 本 Sol 是否有成功任务推进
     sol_sufficiency_improved: bool = False  # 本 Sol 资源自给率是否提升
 
+    # --- Phase 2 引擎化：题材包动态字段 ---
+    # 题材特定字段（如 athena_status 已是核心字段，新题材字段存这里）
+    # 通过 EngineCore.state_schema 注册并初始化
+    custom_fields: Dict[str, Any] = field(default_factory=dict)
+
     def get_npc(self, npc_id: str) -> Optional[NpcState]:
         """获取 NPC 状态，不存在返回 None"""
         return self.npc_states.get(npc_id)
@@ -319,6 +324,14 @@ class GameState:
     def is_ai_sender(self, sender_id: str) -> bool:
         """判断 sender 是否为 AI 类（不进入 npc_states）"""
         return sender_id in AI_SENDERS
+
+    def get_custom(self, name: str, default: Any = None) -> Any:
+        """获取题材包动态字段值（custom_fields）"""
+        return self.custom_fields.get(name, default)
+
+    def set_custom(self, name: str, value: Any) -> None:
+        """设置题材包动态字段值（custom_fields）"""
+        self.custom_fields[name] = value
 
 
 # ============================================================

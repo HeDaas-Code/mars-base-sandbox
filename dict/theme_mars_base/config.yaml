@@ -1,0 +1,86 @@
+# ============================================================
+# 题材包配置：赫拉克勒斯协议（火星基地）
+# 引擎化 Phase 3 - 数据驱动配置
+# 作者：锐锋-核心开发工程师  日期：2026-08-09
+# ============================================================
+
+# ------------------------------------------------------------
+# 状态字段 schema（题材特定字段，注入 GameState.custom_fields）
+# 核心字段（sol/resources/npc_states 等）由引擎默认提供，不在此声明
+# ------------------------------------------------------------
+state_schema:
+  fields:
+    - {name: branch_choice, type: str, default: "", description: "玩家选择的分支路线（A/B/C/D）"}
+    - {name: rover_alpha_status, type: str, default: "damaged", description: "漫游车 Alpha 状态"}
+    - {name: greenhouse_status, type: str, default: "not_built", description: "温室状态"}
+    - {name: exploration_radius, type: int, default: 1, description: "探索半径（六边形格数）"}
+    - {name: ruins_discovered, type: bool, default: false, description: "是否发现火星遗迹"}
+    - {name: ruins_decision, type: str, default: "", description: "遗迹决策"}
+    - {name: sacrifice_decision, type: str, default: "", description: "牺牲决策"}
+    - {name: athena_decision, type: str, default: "", description: "雅典娜决策"}
+    - {name: final_dialogue_triggered, type: bool, default: false, description: "最终对决是否触发"}
+    - {name: ending_triggered, type: bool, default: false, description: "结局是否触发"}
+    - {name: all_crew_alive, type: bool, default: true, description: "全员存活标记"}
+
+# ------------------------------------------------------------
+# 资源定义（注入 GameState.resources，覆盖默认）
+# ------------------------------------------------------------
+resources:
+  - {name: oxygen, max: 100, rate: -0.3, threshold: 20, owner: sophia, initial: 78}
+  - {name: power, max: 100, rate: 0.5, threshold: 15, owner: viktor, initial: 85}
+  - {name: water, max: 100, rate: -0.1, threshold: 15, owner: sophia, initial: 65}
+  - {name: food, max: 100, rate: -0.5, threshold: 10, owner: sophia, initial: 90}
+  - {name: parts, max: 20, rate: 0, threshold: 3, owner: viktor, initial: 12}
+
+# ------------------------------------------------------------
+# 结局注册表（condition → ending_id，按 priority 升序评估）
+# ------------------------------------------------------------
+endings:
+  - id: E7_athena_awakening
+    display_name: E7 雅典娜觉醒
+    condition: 'athena_consciousness_flag == "awakening"'
+    priority: 0
+  - id: E1_hercules_return
+    display_name: E1 赫拉克勒斯归航
+    condition: "all_crew_alive == true and sol >= 60 and oxygen > 30"
+    priority: 10
+  - id: E5_last_signal
+    display_name: E5 最后的信号
+    condition: "oxygen <= 0"
+    priority: 20
+  - id: E6_collapse
+    display_name: E6 守墓人
+    condition: "morale_avg < 0.2"
+    priority: 30
+  - id: E2_mars_child
+    display_name: E2 火星之子
+    condition: 'greenhouse_status == "built"'
+    priority: 40
+
+# ------------------------------------------------------------
+# Meta 命令注册表（handler 名由 EngineCore.bind_command_handlers 解析）
+# ------------------------------------------------------------
+commands:
+  - {name: sol, handler: advance_sol, help: "推进一个 Sol（触发事件检查 + 资源衰减）"}
+  - {name: state, handler: show_state, help: "查看基地与成员状态"}
+  - {name: npc, handler: switch_npc, help: "切换对话目标", aliases: [talk]}
+  - {name: branch, handler: show_branch, help: "查看章节进度与触发器"}
+  - {name: mode, handler: switch_mode, help: "切换响应模式"}
+  - {name: skip, handler: skip_events, help: "跳过所有待处理事件"}
+  - {name: restart, handler: restart_game, help: "重置游戏"}
+  - {name: help, handler: show_help, help: "显示此帮助", aliases: ["?"]}
+
+# ------------------------------------------------------------
+# 信号质量配置
+# ------------------------------------------------------------
+signal_quality:
+  initial: 62
+  min: 20
+  max: 95
+
+# ------------------------------------------------------------
+# 雅典娜 AI 状态（题材特定）
+# ------------------------------------------------------------
+athena:
+  initial_status: normal        # normal / degraded / offline
+  initial_consciousness: normal # normal / awakening

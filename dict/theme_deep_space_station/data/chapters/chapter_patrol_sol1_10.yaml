@@ -1,0 +1,55 @@
+# ============================================================
+# 章节字典：深空科考站 - 巡逻期
+# 最小示例：验证引擎对多题材的章节加载能力
+# 作者：锐锋-核心开发工程师  日期：2026-08-09
+# ============================================================
+
+stage_id: patrol
+stage_name: 巡逻期
+sol_range: [1, 10]
+real_sol_range: [1, 10]
+narrative_focus: "异常信号监测、设备维护、团队信任建立"
+self_sufficiency_target: [50, 80]
+instruction_count_per_sol: "1-2"
+event_frequency: medium
+pacing_feel: "舒缓·偶尔的异常警报"
+critical_resources:
+  - oxygen
+  - power
+  - fuel
+
+# 永久关键词
+permanent_keywords:
+  - keyword: "异常信号"
+    category: signal
+    priority: high
+    description: "来自外太阳系的非自然信号，每隔几个值班周期出现一次"
+  - keyword: "反应堆"
+    category: facility
+    priority: critical
+    description: "科考站聚变反应堆，目前稳定运行"
+
+# 临时触发器
+temporary_keywords: []
+
+# FSM 节点
+fsm:
+  - node_id: patrol_start
+    description: "巡逻开始，全员就位"
+    transitions:
+      - to: signal_detected
+        condition: "signal_anomaly_count >= 1"
+  - node_id: signal_detected
+    description: "检测到异常信号，团队开始分析"
+    transitions:
+      - to: contact_attempt
+        condition: "signal_anomaly_count >= 3"
+  - node_id: contact_attempt
+    description: "尝试与信号源建立通信"
+    transitions:
+      - to: contact_success
+        condition: 'contact_established == true'
+
+stage_transition:
+  next_stage: investigation
+  condition: 'signal_anomaly_count >= 3'

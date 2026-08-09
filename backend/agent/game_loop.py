@@ -125,6 +125,10 @@ class GameLoop:
         self.ending: Optional[Dict[str, Any]] = None
         self._started = False
 
+        # Phase 2 引擎化：可注入的注册表（缺省时回退到硬编码 _ENDING_TABLE）
+        self.ending_registry = None    # EndingRegistry 实例
+        self.persona_registry = None   # PersonaRegistry 实例
+
     # --------------------------------------------------------
     # 启动
     # --------------------------------------------------------
@@ -505,12 +509,22 @@ class GameLoop:
     def _check_ending(self) -> Optional[Dict[str, Any]]:
         """检查是否命中结局
 
-        使用 condition.evaluate_condition 对数据驱动的 _ENDING_TABLE 求值。
+        Phase 2 引擎化：优先使用注入的 EndingRegistry（题材包可配置），
+        回退到硬编码 _ENDING_TABLE（向后兼容）。
 
         Returns:
             {ending_id, display_name} 或 None
         """
         ctx = self._build_condition_context()
+
+        # 优先走 EndingRegistry（Phase 2）
+        if self.ending_registry is not None and len(self.ending_registry) > 0:
+            result = self.ending_registry.evaluate(ctx)
+            if result is not None:
+                return {"ending_id": result.ending_id, "display_name": result.display_name}
+            return None
+
+        # 回退：硬编码 _ENDING_TABLE（向后兼容）
         for ending_id, display_name, cond_str in _ENDING_TABLE:
             try:
                 if evaluate_condition(cond_str, ctx):

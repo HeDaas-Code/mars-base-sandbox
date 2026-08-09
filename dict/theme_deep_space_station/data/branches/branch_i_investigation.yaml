@@ -1,0 +1,35 @@
+# ============================================================
+# 分支事件：深空科考站 - 调查分支
+# 最小示例：单一分支，验证引擎能加载分支数据
+# 作者：锐锋-核心开发工程师  日期：2026-08-09
+# ============================================================
+
+branch_id: I
+branch_name: 异常调查
+trigger_condition: 'signal_anomaly_count >= 3'
+endings:
+  - DSS_contact
+  - DSS_evacuation
+events:
+  - event_id: E_signal_investigation_01
+    sol: 5
+    npc: commander
+    title: 信号源定位
+    description: |
+      经过三个值班周期的监测，异常信号源位置终于被锁定——
+      它来自柯伊伯带方向，规律性极强，绝非自然现象。
+    trigger:
+      trigger_type: state_match
+      condition: 'signal_anomaly_count >= 3'
+    player_options:
+      - option_id: opt_reply
+        text: 尝试回复信号
+        effects:
+          - 'contact_established = true'
+        leads_to: E_first_contact
+      - option_id: opt_ignore
+        text: 暂时忽略，继续观察
+        effects:
+          - 'reactor_status = "unstable"'
+    narrative_function: 关键决策点
+cross_branch_interactions: []

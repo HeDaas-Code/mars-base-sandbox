@@ -46,6 +46,8 @@ from ws_adapter_v2 import (
     NPC_REGISTRY,
     get_game_state,
     AGENT_TO_NPC_ID,
+    get_theme_meta_if_available,
+    set_engine_core,
 )
 from agent.game_state import (
     create_initial_game_state,
@@ -108,6 +110,9 @@ def build_session_init(session: ClientSession) -> Dict:
     """构造 session_init 消息（v1.1 §3.2）
 
     前端收到后会初始化世界状态、CrewPanel、MemoryLoadIndicator 等。
+
+    Phase 3 引擎化：若 EngineCore 已注入，则 world_snapshot.theme 包含主题元信息，
+    前端可据此动态渲染 UI（资源条标签、状态字段、命令列表等）。
     """
     gs = get_game_state()
 
@@ -141,6 +146,9 @@ def build_session_init(session: ClientSession) -> Dict:
                 "rate": res.get("rate", 0),
             }
 
+    # 主题元信息（Phase 3 引擎化：若 EngineCore 已注入则提供）
+    theme_meta = get_theme_meta_if_available()
+
     return _proto_build_session_init(
         session_id=session.session_id,
         player_id=session.player_id or "earth_observer_01",
@@ -149,6 +157,7 @@ def build_session_init(session: ClientSession) -> Dict:
         sol=gs.sol,
         agents_list=agents_list,
         resources=resources,
+        theme_meta=theme_meta,
     )
 
 
@@ -497,6 +506,30 @@ async def client_handler(websocket):
 async def start_server(host: str = "0.0.0.0", port: int = 8000):
     """启动 WebSocket 服务器"""
 
+    # Phase 3 引擎化：优先用 EngineCore 加载题材包
+    engine_injected = False
+    try:
+        from agent.engine.data_loader import DataLoader
+        from agent.engine.engine_core import EngineCore
+        # 题材包目录（相对 backend/ 上一级的项目根 dict/theme_mars_base）
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        theme_dir = os.path.join(project_root, "dict", "theme_mars_base")
+        loader = DataLoader()
+        bundle = loader.load_theme(theme_dir)
+        if bundle and not bundle.errors:
+            engine = EngineCore()
+            engine.load_theme(bundle)
+            engine.init(start_stage="survival", chat_fn=_chat_fn_proxy)
+            set_engine_core(engine)
+            engine_injected = True
+            logger.info("EngineCore 已加载题材包: %s (%s)",
+                        bundle.theme_id, bundle.theme_name)
+        else:
+            logger.warning("题材包加载失败，回退到默认 GameLoop: %s",
+                           bundle.errors if bundle else "目录不存在")
+    except Exception as e:
+        logger.warning("EngineCore 初始化失败，回退到默认 GameLoop: %s", e)
+
     # 预热 GameState（避免首次请求延迟过高）
     logger.info("预热 GameState...")
     gs = get_game_state()
@@ -527,6 +560,7 @@ async def start_server(host: str = "0.0.0.0", port: int = 8000):
     logger.info("WebSocket 联调服务器启动")
     logger.info("监听: ws://%s:%d/ws", host, port)
     logger.info("前端连接: ws://localhost:%d/ws", port)
+    logger.info("EngineCore: %s", "已注入" if engine_injected else "未注入（回退默认）")
     logger.info("按 Ctrl+C 停止")
     logger.info("=" * 60)
 
@@ -535,10 +569,21 @@ async def start_server(host: str = "0.0.0.0", port: int = 8000):
         await asyncio.Future()  # 永久阻塞
 
 
+def _chat_fn_proxy(player_input: str, agent_id: str, response_mode: str, npc_state_vars: Dict) -> Dict:
+    """EngineCore 注入的 chat 回调代理：转发到 ws_adapter_v2._process_natural_language
+
+    复用 ws_adapter_v2 的全部信封构建逻辑（agent_message + emotion_hint + context_summary）。
+    """
+    from ws_adapter_v2 import _process_natural_language
+    return _process_natural_language(player_input, agent_id, response_mode, npc_state_vars)
+
+
 def main():
     parser = argparse.ArgumentParser(description="WebSocket 联调服务器")
     parser.add_argument("--host", default="0.0.0.0", help="监听地址（默认 0.0.0.0）")
     parser.add_argument("--port", type=int, default=8000, help="监听端口（默认 8000）")
+    parser.add_argument("--theme", default="dict/theme_mars_base",
+                        help="题材包目录（默认 dict/theme_mars_base）")
     args = parser.parse_args()
 
     try:
