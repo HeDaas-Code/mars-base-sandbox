@@ -8,6 +8,7 @@ LangGraph 状态图 - 核心 Agent 链路
 - deep:       GPT-4o，深思熟虑的高质量回复
 """
 
+import logging
 import time
 from typing import Dict
 
@@ -20,6 +21,8 @@ from .config import config
 from .prompt import get_system_prompt, format_game_state
 from .memory import MemoryStore, format_memories_for_prompt, get_memory_store
 from .compress import compress_context, write_episodic_memory
+
+logger = logging.getLogger("agent.graph")
 
 
 # ============================================================
@@ -135,8 +138,8 @@ def generate_response(state: AgentState) -> Dict:
                 api_key=config.llm_api_key,
                 base_url=config.llm_base_url,
             )
-        except Exception:
-            print("[WARN] LLM 初始化失败，降级到 Mock 模式")
+        except Exception as e:
+            logger.warning("LLM 初始化失败 (mode=%s): %s，降级到 Mock 模式", mode, e)
             llm = MockLLM()
     elif mode == "deep":
         try:
@@ -147,8 +150,8 @@ def generate_response(state: AgentState) -> Dict:
                 api_key=config.llm_api_key,
                 base_url=config.llm_base_url,
             )
-        except Exception:
-            print("[WARN] LLM 初始化失败，降级到 Mock 模式")
+        except Exception as e:
+            logger.warning("LLM 初始化失败 (mode=%s): %s，降级到 Mock 模式", mode, e)
             llm = MockLLM()
     else:
         llm = MockLLM()
@@ -166,7 +169,7 @@ def generate_response(state: AgentState) -> Dict:
 
     except Exception as e:
         # API 调用失败，降级到 Mock
-        print(f"[WARN] LLM 调用失败 ({e})，降级到 Mock 模式")
+        logger.warning("LLM 调用失败: %s，降级到 Mock 模式", e)
         mock = MockLLM()
         response = mock.invoke(messages)
         content = response.content
